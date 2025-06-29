@@ -15,7 +15,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
   isLoading
 }) => {
   const [showTooltip, setShowTooltip] = useState(false);
-  const maxLength = 500;
+  const maxLength = 1000;
   const remainingChars = maxLength - value.length;
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -34,7 +34,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
   return (
     <div className="bg-white/70 backdrop-blur-xl rounded-2xl border border-orange-200/50 p-8 shadow-lg">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-gray-800">Describe Your Prompt</h2>
+        <h2 className="text-xl font-semibold text-gray-800">Describe Your Initial Thought</h2>
         <div className="relative">
           <button
             onMouseEnter={() => setShowTooltip(true)}
@@ -68,7 +68,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
             maxLength={maxLength}
           />
           <div className="absolute bottom-3 right-3 text-xs text-gray-500">
-            <span className={remainingChars < 50 ? 'text-orange-500' : remainingChars < 20 ? 'text-red-500' : ''}>
+            <span className={remainingChars < 100 ? 'text-orange-500' : remainingChars < 50 ? 'text-red-500' : ''}>
               {remainingChars}
             </span> characters remaining
           </div>
