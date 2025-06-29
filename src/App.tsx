@@ -8,7 +8,6 @@ import { GeneratedPrompts } from './components/GeneratedPrompts';
 import { SavedPrompts } from './components/SavedPrompts';
 import { LoadingSpinner } from './components/LoadingSpinner';
 import { ErrorMessage } from './components/ErrorMessage';
-import { PricingModal } from './components/PricingModal';
 import { PricingSection } from './components/PricingSection';
 import { SuccessPage } from './components/SuccessPage';
 
@@ -37,7 +36,6 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'generate' | 'saved' | 'pricing'>('generate');
   const [showAuthPage, setShowAuthPage] = useState(false);
-  const [showPricingModal, setShowPricingModal] = useState(false);
   const [showSuccessPage, setShowSuccessPage] = useState(false);
 
   // Check for success parameter in URL
@@ -104,10 +102,10 @@ function App() {
       const remainingPrompts = getRemainingPrompts();
       if (remainingPrompts === 0) {
         setError('You have reached your prompt limit. Please upgrade your plan to continue.');
-        setShowPricingModal(true);
+        setActiveTab('pricing');
       } else if (!isSubscriptionActive()) {
         setError('Your subscription is not active. Please check your payment method or upgrade your plan.');
-        setShowPricingModal(true);
+        setActiveTab('pricing');
       } else {
         setError('Unable to generate prompts at this time. Please try again later.');
       }
@@ -257,19 +255,11 @@ function App() {
             />
           ) : (
             <PricingSection
-              onUpgradeClick={() => setShowPricingModal(true)}
               currentPlan={subscription?.plan_type}
             />
           )}
         </main>
       </div>
-
-      {/* Pricing Modal */}
-      <PricingModal
-        isOpen={showPricingModal}
-        onClose={() => setShowPricingModal(false)}
-        currentPlan={subscription?.plan_type}
-      />
     </div>
   );
 }

@@ -1,16 +1,59 @@
-import React from 'react';
-import { Check, Zap, Crown, Gift, Sparkles } from 'lucide-react';
+import React, { useState } from 'react';
+import { Check, Zap, Crown, Gift, Sparkles, Loader2 } from 'lucide-react';
 import { stripeProducts } from '../stripe-config';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
 
 interface PricingSectionProps {
-  onUpgradeClick: () => void;
   currentPlan?: 'free' | 'monthly' | 'yearly';
 }
 
 export const PricingSection: React.FC<PricingSectionProps> = ({ 
-  onUpgradeClick, 
   currentPlan = 'free' 
 }) => {
+  const { user } = useAuth();
+  const [loading, setLoading] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleUpgrade = async (priceId: string, planId: string) => {
+    if (!user) {
+      setError('Please sign in to upgrade');
+      return;
+    }
+
+    setLoading(planId);
+    setError(null);
+
+    try {
+      const { data, error: functionError } = await supabase.functions.invoke(
+        'stripe-checkout',
+        {
+          body: {
+            price_id: priceId,
+            success_url: `${window.location.origin}/success`,
+            cancel_url: `${window.location.origin}/pricing`,
+            mode: 'payment',
+          },
+        }
+      );
+
+      if (functionError) {
+        throw functionError;
+      }
+
+      if (!data.url) {
+        throw new Error('No checkout URL returned');
+      }
+
+      // Redirect directly to Stripe Checkout
+      window.location.href = data.url;
+    } catch (err) {
+      console.error('Payment error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to start payment process');
+      setLoading(null);
+    }
+  };
+
   const plans = [
     {
       id: 'free',
@@ -30,6 +73,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
       borderColor: 'border-gray-200',
       current: currentPlan === 'free',
       popular: false,
+      priceId: null,
     },
     {
       id: 'monthly',
@@ -51,6 +95,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
       borderColor: 'border-orange-300',
       current: currentPlan === 'monthly',
       popular: true,
+      priceId: stripeProducts.find(p => p.name === 'Hot Prompt Month')?.priceId,
     },
     {
       id: 'yearly',
@@ -74,6 +119,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
       borderColor: 'border-purple-300',
       current: currentPlan === 'yearly',
       popular: false,
+      priceId: stripeProducts.find(p => p.name === 'Hot Prompt Year')?.priceId,
     },
   ];
 
@@ -90,10 +136,19 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
         </p>
       </div>
 
+      {/* Error Message */}
+      {error && (
+        <div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4">
+          <p className="text-red-700 text-sm">{error}</p>
+        </div>
+      )}
+
       <div className="grid md:grid-cols-3 gap-6">
         {plans.map((plan) => {
           const Icon = plan.icon;
           const isCurrentPlan = plan.current;
+          const canUpgrade = plan.id !== 'free' && !isCurrentPlan && plan.priceId;
+          const isLoadingPlan = loading === plan.id;
 
           return (
             <div
@@ -158,17 +213,24 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
 
               {/* Action Button */}
               <button
-                onClick={() => !isCurrentPlan && plan.id !== 'free' && onUpgradeClick()}
-                disabled={isCurrentPlan || plan.id === 'free'}
+                onClick={() => canUpgrade && plan.priceId && handleUpgrade(plan.priceId, plan.id)}
+                disabled={!canUpgrade || isLoadingPlan || !plan.priceId}
                 className={`w-full py-3 rounded-xl font-medium transition-all duration-200 transform hover:scale-105 disabled:hover:scale-100 flex items-center justify-center space-x-2 shadow-lg ${
                   isCurrentPlan
                     ? 'bg-green-100 text-green-700 cursor-default'
                     : plan.id === 'free'
                     ? 'bg-gray-100 text-gray-500 cursor-default'
-                    : 'bg-gradient-to-r from-orange-400 to-red-500 hover:from-orange-500 hover:to-red-600 text-white hover:shadow-xl'
+                    : canUpgrade && plan.priceId
+                    ? 'bg-gradient-to-r from-orange-400 to-red-500 hover:from-orange-500 hover:to-red-600 text-white hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed'
+                    : 'bg-gray-100 text-gray-500 cursor-default'
                 }`}
               >
-                {isCurrentPlan ? (
+                {isLoadingPlan ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Processing...</span>
+                  </>
+                ) : isCurrentPlan ? (
                   <>
                     <Check className="w-4 h-4" />
                     <span>Current Plan</span>
