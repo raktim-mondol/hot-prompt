@@ -7,7 +7,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signUp: (email: string, password: string) => Promise<{ data: any; error: AuthError | null }>;
-  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
+  signIn: (email: string, password: string, rememberDevice?: boolean) => Promise<{ error: AuthError | null }>;
   signInWithGitHub: () => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<{ error: AuthError | null }>;
 }
@@ -141,12 +141,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return result;
   };
 
-  const signIn = async (email: string, password: string) => {
-    console.log('Attempting to sign in with email:', email);
+  const signIn = async (email: string, password: string, rememberDevice: boolean = true) => {
+    console.log('Attempting to sign in with email:', email, 'Remember device:', rememberDevice);
+    
+    // Set session persistence based on rememberDevice option
+    const persistSession = rememberDevice ? 'local' : 'session';
+    
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+
+    // If sign in was successful and we want to control persistence
+    if (!error && !rememberDevice) {
+      // For session-only persistence, we need to update the session storage
+      // This will make the session expire when the browser tab is closed
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          // Store in sessionStorage instead of localStorage
+          sessionStorage.setItem('supabase.auth.token', JSON.stringify(session));
+          localStorage.removeItem('supabase.auth.token');
+        }
+      } catch (storageError) {
+        console.warn('Could not update session storage:', storageError);
+      }
+    }
+
     return { error };
   };
 

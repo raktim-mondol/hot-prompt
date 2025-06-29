@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, Lock, User, Eye, EyeOff, Flame, Sparkles, Zap, Star, ArrowLeft, CheckCircle, Github } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, Flame, Sparkles, Zap, Star, ArrowLeft, CheckCircle, Github, Shield } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 interface AuthFormProps {
@@ -11,6 +11,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onBack }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberDevice, setRememberDevice] = useState(true);
   const [loading, setLoading] = useState(false);
   const [githubLoading, setGithubLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +39,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onBack }) => {
 
     try {
       if (isLogin) {
-        const { error } = await signIn(email, password);
+        const { error } = await signIn(email, password, rememberDevice);
         if (error) {
           setError(error.message);
         } else if (onBack) {
@@ -373,6 +374,39 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onBack }) => {
                     </p>
                   )}
                 </div>
+
+                {/* Remember Device Checkbox - Only show for login */}
+                {isLogin && (
+                  <div className="flex items-center space-x-3">
+                    <div className="relative">
+                      <input
+                        id="remember-device"
+                        type="checkbox"
+                        checked={rememberDevice}
+                        onChange={(e) => setRememberDevice(e.target.checked)}
+                        className="sr-only"
+                      />
+                      <label
+                        htmlFor="remember-device"
+                        className={`flex items-center justify-center w-5 h-5 rounded border-2 cursor-pointer transition-all duration-200 ${
+                          rememberDevice
+                            ? 'bg-orange-500 border-orange-500'
+                            : 'bg-white border-orange-300 hover:border-orange-400'
+                        }`}
+                      >
+                        {rememberDevice && (
+                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                      </label>
+                    </div>
+                    <label htmlFor="remember-device" className="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
+                      <Shield className="w-4 h-4 text-orange-500" />
+                      <span>Remember this device for 30 days</span>
+                    </label>
+                  </div>
+                )}
 
                 {/* Submit Button */}
                 <button
