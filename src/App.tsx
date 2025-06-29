@@ -256,9 +256,6 @@ function App() {
     <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50">
       <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg fill=%22%23F97316%22 fill-opacity=%220.03%22%3E%3Ccircle cx=%2230%22 cy=%2230%22 r=%222%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-50"></div>
       
-      {/* Usage Indicator - Fixed position in top right */}
-      {user && <UsageIndicator onUpgradeClick={() => setActiveTab('pricing')} />}
-      
       <div className="relative z-10">
         <Header 
           activeTab={activeTab} 
@@ -270,6 +267,13 @@ function App() {
         <main className="container mx-auto px-4 py-8 max-w-6xl">
           {error && (
             <ErrorMessage message={error} onClear={clearError} />
+          )}
+
+          {/* Usage Indicator - Show when user is logged in, positioned in main content */}
+          {user && (
+            <div className="flex justify-end mb-6">
+              <UsageIndicator onUpgradeClick={() => setActiveTab('pricing')} />
+            </div>
           )}
 
           {activeTab === 'generate' ? (

@@ -20,7 +20,7 @@ export const UsageIndicator: React.FC<UsageIndicatorProps> = ({ onUpgradeClick }
   // Show error state with retry option
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 shadow-lg flex items-center space-x-2 mb-6">
+      <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-2 shadow-lg flex items-center space-x-2 max-w-xs">
         <AlertTriangle className="w-4 h-4 text-red-600" />
         <span className="text-sm text-red-700">Error loading usage</span>
         <button
@@ -37,15 +37,15 @@ export const UsageIndicator: React.FC<UsageIndicatorProps> = ({ onUpgradeClick }
   // Show loading state
   if (loading) {
     return (
-      <div className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-lg shadow-lg overflow-hidden mb-6">
+      <div className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-lg shadow-lg overflow-hidden max-w-xs">
         {/* Animated loading bar */}
         <div className="h-1 bg-gray-200 overflow-hidden">
           <div className="h-full bg-gradient-to-r from-orange-400 to-red-500 animate-pulse w-full"></div>
         </div>
         
-        <div className="px-3 py-2">
+        <div className="px-4 py-2">
           <div className="animate-pulse">
-            <div className="h-4 bg-gray-200 rounded w-16"></div>
+            <div className="h-4 bg-gray-200 rounded w-20"></div>
           </div>
         </div>
       </div>
@@ -55,12 +55,12 @@ export const UsageIndicator: React.FC<UsageIndicatorProps> = ({ onUpgradeClick }
   // If no data, show default
   if (!usage || !subscription) {
     return (
-      <div className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-lg shadow-lg overflow-hidden mb-6">
+      <div className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-lg shadow-lg overflow-hidden max-w-xs">
         <div className="h-1 bg-gray-200">
           <div className="h-full bg-green-500 w-full"></div>
         </div>
         
-        <div className="px-3 py-2">
+        <div className="px-4 py-2">
           <div className="text-sm font-medium text-gray-700">
             Usage: 0/3
           </div>
@@ -70,7 +70,8 @@ export const UsageIndicator: React.FC<UsageIndicatorProps> = ({ onUpgradeClick }
   }
 
   const usagePercentage = getUsagePercentage();
-  const isOutOfPrompts = getRemainingPrompts() === 0;
+  const remainingPrompts = getRemainingPrompts();
+  const isOutOfPrompts = remainingPrompts === 0;
 
   const getProgressColor = () => {
     if (usagePercentage >= 90) return 'bg-red-500';
@@ -79,7 +80,7 @@ export const UsageIndicator: React.FC<UsageIndicatorProps> = ({ onUpgradeClick }
   };
 
   return (
-    <div className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-lg shadow-lg overflow-hidden mb-6">
+    <div className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-lg shadow-lg overflow-hidden max-w-xs">
       {/* Top Progress Bar */}
       <div className="h-1 bg-gray-200">
         <div
@@ -88,9 +89,9 @@ export const UsageIndicator: React.FC<UsageIndicatorProps> = ({ onUpgradeClick }
         ></div>
       </div>
 
-      <div className="px-3 py-2 flex items-center justify-between">
+      <div className="px-4 py-2 flex items-center justify-between">
         <div className="text-sm font-medium text-gray-700">
-          Usage: {usage.prompts_used}/{usage.prompts_limit}
+          {usage.prompts_used}/{usage.prompts_limit}
         </div>
 
         {isOutOfPrompts && (
