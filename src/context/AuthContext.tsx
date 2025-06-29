@@ -32,12 +32,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    let mounted = true;
+
+    const initializeAuth = async () => {
+      try {
+        // Check if there's a session in the URL (from OAuth callback or email confirmation)
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (mounted) {
+          if (error) {
+            console.error('Error getting session:', error);
+          } else {
+            setSession(data.session);
+            setUser(data.session?.user ?? null);
+          }
+          setLoading(false);
+        }
+
+        // Clean up URL hash if it contains auth tokens
+        if (window.location.hash && window.location.hash.includes('access_token')) {
+          // Use replaceState to remove the hash without triggering a page reload
+          window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    initializeAuth();
 
     // Listen for auth changes
     const {
@@ -45,26 +70,41 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state changed:', event, session);
       
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
+      if (mounted) {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
 
-      // Handle OAuth callback
-      if (event === 'SIGNED_IN' && session) {
-        // Clear any hash from URL after successful OAuth sign in
-        if (window.location.hash) {
-          window.history.replaceState(null, '', window.location.pathname);
+        // Handle successful sign in events
+        if (event === 'SIGNED_IN' && session) {
+          // Clean up URL hash after successful OAuth sign in or email confirmation
+          if (window.location.hash && (
+            window.location.hash.includes('access_token') || 
+            window.location.hash.includes('type=signup') ||
+            window.location.hash.includes('type=recovery')
+          )) {
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+          }
         }
-      }
 
-      // Handle sign out
-      if (event === 'SIGNED_OUT') {
-        setSession(null);
-        setUser(null);
+        // Handle sign out
+        if (event === 'SIGNED_OUT') {
+          setSession(null);
+          setUser(null);
+        }
+
+        // Handle token refresh
+        if (event === 'TOKEN_REFRESHED' && session) {
+          setSession(session);
+          setUser(session.user);
+        }
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string) => {
