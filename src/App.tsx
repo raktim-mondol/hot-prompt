@@ -33,6 +33,17 @@ function App() {
       if (saved) {
         setSavedPrompts(JSON.parse(saved));
       }
+    } else {
+      // Clear saved prompts when user signs out
+      setSavedPrompts([]);
+    }
+  }, [user]);
+
+  // Clear generated prompts when user signs out
+  useEffect(() => {
+    if (!user) {
+      setGeneratedPrompts([]);
+      setActiveTab('generate'); // Reset to generate tab
     }
   }, [user]);
 
@@ -167,7 +178,7 @@ function App() {
 
               {isLoading && <LoadingSpinner />}
 
-              {generatedPrompts.length > 0 && !isLoading && (
+              {generatedPrompts.length > 0 && !isLoading && user && (
                 <GeneratedPrompts
                   prompts={generatedPrompts}
                   onSave={handleSavePrompt}
