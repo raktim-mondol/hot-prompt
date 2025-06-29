@@ -114,102 +114,108 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onUpgradeClick }) => {
         <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
-      {/* Dropdown Menu - Increased z-index to appear above all content */}
+      {/* Dropdown Menu - Fixed positioning and maximum z-index */}
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-200 z-[9999] overflow-hidden">
-          {/* Header */}
-          <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-red-50">
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-                <User className="w-6 h-6 text-orange-600" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-medium text-gray-800 truncate">
-                  {user.email}
+        <>
+          {/* Backdrop overlay to ensure dropdown appears above everything */}
+          <div className="fixed inset-0 z-[99998]" onClick={() => setIsOpen(false)} />
+          
+          {/* Dropdown content with maximum z-index */}
+          <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-200 z-[99999] overflow-hidden">
+            {/* Header */}
+            <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-red-50">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                  <User className="w-6 h-6 text-orange-600" />
                 </div>
-                <div className="text-sm text-gray-600">
-                  Account
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-gray-800 truncate">
+                    {user.email}
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    Account
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Current Plan */}
-          <div className="p-4 border-b border-gray-100">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="font-medium text-gray-800">Current Plan</h4>
-              <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${getPlanColor()}`}>
-                <PlanIcon className="w-3 h-3" />
-                <span>{getPlanName()}</span>
+            {/* Current Plan */}
+            <div className="p-4 border-b border-gray-100">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-medium text-gray-800">Current Plan</h4>
+                <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${getPlanColor()}`}>
+                  <PlanIcon className="w-3 h-3" />
+                  <span>{getPlanName()}</span>
+                </div>
               </div>
+
+              {/* Subscription End Date */}
+              {subscription?.plan_type !== 'free' && subscription?.current_period_end && (
+                <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
+                  <Calendar className="w-4 h-4" />
+                  <span>Ends on {getSubscriptionEndDate()}</span>
+                </div>
+              )}
+
+              {/* Free Plan Reset Date */}
+              {subscription?.plan_type === 'free' && usage?.reset_date && (
+                <div className="flex items-center space-x-2 text-sm text-gray-600">
+                  <Calendar className="w-4 h-4" />
+                  <span>Resets on {getUsageResetDate()}</span>
+                </div>
+              )}
             </div>
 
-            {/* Subscription End Date */}
-            {subscription?.plan_type !== 'free' && subscription?.current_period_end && (
-              <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
-                <Calendar className="w-4 h-4" />
-                <span>Ends on {getSubscriptionEndDate()}</span>
+            {/* Usage Section */}
+            <div className="p-4 border-b border-gray-100">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-medium text-gray-800">Usage</h4>
+                <span className="text-sm text-gray-600">
+                  {usage?.prompts_used || 0}/{usage?.prompts_limit || 0}
+                </span>
               </div>
-            )}
 
-            {/* Free Plan Reset Date */}
-            {subscription?.plan_type === 'free' && usage?.reset_date && (
-              <div className="flex items-center space-x-2 text-sm text-gray-600">
-                <Calendar className="w-4 h-4" />
-                <span>Resets on {getUsageResetDate()}</span>
+              {/* Progress Bar */}
+              <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                <div
+                  className={`h-2 rounded-full transition-all duration-300 ${getProgressColor()}`}
+                  style={{ width: `${getUsagePercentage()}%` }}
+                ></div>
               </div>
-            )}
-          </div>
 
-          {/* Usage Section */}
-          <div className="p-4 border-b border-gray-100">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="font-medium text-gray-800">Usage</h4>
-              <span className="text-sm text-gray-600">
-                {usage?.prompts_used || 0}/{usage?.prompts_limit || 0}
-              </span>
+              <div className="text-xs text-gray-500">
+                {usage?.prompts_limit && usage.prompts_used 
+                  ? `${usage.prompts_limit - usage.prompts_used} prompts remaining`
+                  : 'Loading usage data...'
+                }
+              </div>
+
+              {/* Upgrade Button for Free Users */}
+              {subscription?.plan_type === 'free' && (
+                <button
+                  onClick={() => {
+                    onUpgradeClick();
+                    setIsOpen(false);
+                  }}
+                  className="w-full mt-3 bg-gradient-to-r from-orange-400 to-red-500 hover:from-orange-500 hover:to-red-600 text-white py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105"
+                >
+                  Upgrade to Pro
+                </button>
+              )}
             </div>
 
-            {/* Progress Bar */}
-            <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-              <div
-                className={`h-2 rounded-full transition-all duration-300 ${getProgressColor()}`}
-                style={{ width: `${getUsagePercentage()}%` }}
-              ></div>
-            </div>
-
-            <div className="text-xs text-gray-500">
-              {usage?.prompts_limit && usage.prompts_used 
-                ? `${usage.prompts_limit - usage.prompts_used} prompts remaining`
-                : 'Loading usage data...'
-              }
-            </div>
-
-            {/* Upgrade Button for Free Users */}
-            {subscription?.plan_type === 'free' && (
+            {/* Menu Items */}
+            <div className="py-2">
               <button
-                onClick={() => {
-                  onUpgradeClick();
-                  setIsOpen(false);
-                }}
-                className="w-full mt-3 bg-gradient-to-r from-orange-400 to-red-500 hover:from-orange-500 hover:to-red-600 text-white py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105"
+                onClick={handleSignOut}
+                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center space-x-3 transition-colors"
               >
-                Upgrade to Pro
+                <LogOut className="w-4 h-4" />
+                <span>Sign Out</span>
               </button>
-            )}
+            </div>
           </div>
-
-          {/* Menu Items */}
-          <div className="py-2">
-            <button
-              onClick={handleSignOut}
-              className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center space-x-3 transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-              <span>Sign Out</span>
-            </button>
-          </div>
-        </div>
+        </>
       )}
     </div>
   );
