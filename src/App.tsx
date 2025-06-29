@@ -174,8 +174,6 @@ function App() {
                 onChange={setInput}
                 onGenerate={handleGenerate}
                 isLoading={isLoading}
-                user={user}
-                onAuthClick={() => setShowAuthPage(true)}
               />
 
               {isLoading && <LoadingSpinner />}

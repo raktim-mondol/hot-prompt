@@ -41,21 +41,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth event:', event, session?.user?.email_confirmed_at);
-      
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
-
-      // Handle email confirmation
-      if (event === 'SIGNED_IN' && session?.user) {
-        // Check if email is confirmed
-        if (!session.user.email_confirmed_at) {
-          console.log('Email not confirmed, signing out...');
-          await supabase.auth.signOut();
-        }
-      }
     });
 
     return () => subscription.unsubscribe();
@@ -65,32 +54,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`
-      }
     });
     return { error };
   };
 
   const signIn = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
-
-    // Additional check for email confirmation
-    if (!error && data.user && !data.user.email_confirmed_at) {
-      // Sign out immediately if email is not confirmed
-      await supabase.auth.signOut();
-      return { 
-        error: { 
-          message: 'Email not confirmed. Please check your email and click the verification link.',
-          name: 'EmailNotConfirmedError',
-          status: 400
-        } as AuthError 
-      };
-    }
-
     return { error };
   };
 
