@@ -40,29 +40,49 @@ function App() {
   const [showAuthPage, setShowAuthPage] = useState(false);
   const [showSuccessPage, setShowSuccessPage] = useState(false);
 
-  // Check for success parameter in URL or success path
+  // Check for success page on initial load and URL changes
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const sessionId = urlParams.get('session_id');
-    const currentPath = window.location.pathname;
-    
-    // Check if we're on the success page or have success parameters
-    if (sessionId || currentPath === '/success' || urlParams.get('success') === 'true') {
-      console.log('Payment success detected, showing success page');
-      setShowSuccessPage(true);
+    const checkForSuccessPage = () => {
+      const currentPath = window.location.pathname;
+      const urlParams = new URLSearchParams(window.location.search);
+      const sessionId = urlParams.get('session_id');
+      const successParam = urlParams.get('success');
       
-      // Clean up URL without causing a page reload
-      const cleanUrl = window.location.origin + window.location.pathname.replace('/success', '/');
-      window.history.replaceState({}, document.title, cleanUrl);
-      
-      // Refetch subscription data after successful payment
-      if (user) {
-        setTimeout(() => {
-          console.log('Refetching subscription data after payment');
-          refetchSubscription();
-        }, 2000); // Give some time for webhook to process
+      // Check if we're on the success page or have success parameters
+      if (currentPath === '/success' || sessionId || successParam === 'true') {
+        console.log('Payment success detected, showing success page');
+        setShowSuccessPage(true);
+        
+        // Clean up URL without causing a page reload
+        const cleanUrl = window.location.origin + '/';
+        window.history.replaceState({}, document.title, cleanUrl);
+        
+        // Refetch subscription data after successful payment
+        if (user) {
+          setTimeout(() => {
+            console.log('Refetching subscription data after payment');
+            refetchSubscription();
+          }, 2000); // Give some time for webhook to process
+        }
+        
+        return true;
       }
-    }
+      return false;
+    };
+
+    // Check on initial load
+    const isSuccessPage = checkForSuccessPage();
+    
+    // Listen for popstate events (back/forward navigation)
+    const handlePopState = () => {
+      checkForSuccessPage();
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
   }, [user, refetchSubscription]);
 
   // Load saved prompts from localStorage on mount and when user changes
