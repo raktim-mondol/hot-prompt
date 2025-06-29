@@ -8,7 +8,6 @@ import { GeneratedPrompts } from './components/GeneratedPrompts';
 import { SavedPrompts } from './components/SavedPrompts';
 import { LoadingSpinner } from './components/LoadingSpinner';
 import { ErrorMessage } from './components/ErrorMessage';
-import { UsageIndicator } from './components/UsageIndicator';
 import { PricingSection } from './components/PricingSection';
 import { SuccessPage } from './components/SuccessPage';
 
@@ -275,13 +274,6 @@ function App() {
         <main className="container mx-auto px-4 py-8 max-w-6xl">
           {error && (
             <ErrorMessage message={error} onClear={clearError} />
-          )}
-
-          {/* Usage Indicator - Show when user is logged in, positioned in main content */}
-          {user && (
-            <div className="flex justify-end mb-6">
-              <UsageIndicator onUpgradeClick={handleUpgradeClick} />
-            </div>
           )}
 
           {activeTab === 'generate' ? (
