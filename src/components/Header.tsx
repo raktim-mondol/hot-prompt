@@ -8,6 +8,7 @@ interface HeaderProps {
   user: any;
   onAuthClick: () => void;
   onUpgradeClick: () => void;
+  onSignOut: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({ 
@@ -15,7 +16,8 @@ export const Header: React.FC<HeaderProps> = ({
   setActiveTab, 
   user, 
   onAuthClick,
-  onUpgradeClick 
+  onUpgradeClick,
+  onSignOut
 }) => {
   return (
     <header className="bg-white/60 backdrop-blur-xl border-b border-orange-200/50">
@@ -76,7 +78,7 @@ export const Header: React.FC<HeaderProps> = ({
             {/* User Menu */}
             <div className={`flex items-center ${user ? 'pl-4 border-l border-orange-200' : ''}`}>
               {user ? (
-                <UserProfile onUpgradeClick={onUpgradeClick} />
+                <UserProfile onUpgradeClick={onUpgradeClick} onSignOut={onSignOut} />
               ) : (
                 <button
                   onClick={onAuthClick}

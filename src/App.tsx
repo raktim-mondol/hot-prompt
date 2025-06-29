@@ -20,14 +20,15 @@ export interface Prompt {
 }
 
 function App() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, signOut } = useAuth();
   const { 
     subscription, 
     canGeneratePrompt, 
     incrementUsage, 
     getRemainingPrompts,
     isSubscriptionActive,
-    refetch: refetchSubscription
+    refetch: refetchSubscription,
+    loading: subscriptionLoading
   } = useSubscription();
   
   const [input, setInput] = useState('');
@@ -143,42 +144,56 @@ function App() {
       return;
     }
 
-    // Check if user can generate prompts (usage limits, subscription status)
-    const canGenerate = await canGeneratePrompt();
-    if (!canGenerate) {
-      const remainingPrompts = getRemainingPrompts();
-      if (remainingPrompts === 0) {
-        setError('You have reached your prompt limit. Please upgrade your plan to continue.');
-        setActiveTab('pricing');
-      } else if (!isSubscriptionActive()) {
-        setError('Your subscription is not active. Please check your payment method or upgrade your plan.');
-        setActiveTab('pricing');
-      } else {
-        setError('Unable to generate prompts at this time. Please try again later.');
-      }
-      return;
-    }
-
     setIsLoading(true);
     setError(null);
 
     try {
+      // Check if user can generate prompts (usage limits, subscription status)
+      console.log('Checking if user can generate prompts...');
+      const canGenerate = await canGeneratePrompt();
+      console.log('Can generate result:', canGenerate);
+      
+      if (!canGenerate) {
+        const remainingPrompts = getRemainingPrompts();
+        console.log('Cannot generate. Remaining prompts:', remainingPrompts);
+        
+        if (remainingPrompts === 0) {
+          setError('You have reached your prompt limit. Please upgrade your plan to continue.');
+          setActiveTab('pricing');
+        } else if (!isSubscriptionActive()) {
+          setError('Your subscription is not active. Please check your payment method or upgrade your plan.');
+          setActiveTab('pricing');
+        } else {
+          setError('Unable to generate prompts at this time. Please try again later.');
+        }
+        setIsLoading(false);
+        return;
+      }
+
       // Simulate API call with realistic delay
+      console.log('Generating prompts...');
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       // Generate mock prompts based on input
       const mockPrompts = generateMockPrompts(input);
       setGeneratedPrompts(mockPrompts);
+      console.log('Generated prompts:', mockPrompts);
 
       // Increment usage count and immediately refresh subscription data
+      console.log('Incrementing usage...');
       const success = await incrementUsage();
       if (!success) {
         console.warn('Failed to increment usage count');
+        setError('Generated prompt but failed to update usage count. Please refresh the page.');
       } else {
+        console.log('Usage incremented successfully');
         // Force immediate refresh of subscription data to update usage indicator
-        await refetchSubscription();
+        setTimeout(() => {
+          refetchSubscription();
+        }, 1000);
       }
     } catch (err) {
+      console.error('Error in handleGenerate:', err);
       setError('Failed to generate prompts. Please try again.');
     } finally {
       setIsLoading(false);
@@ -252,18 +267,41 @@ function App() {
     refetchSubscription();
   };
 
+  const handleSignOut = async () => {
+    try {
+      console.log('Signing out user...');
+      await signOut();
+      console.log('User signed out successfully');
+      
+      // Clear local state
+      setGeneratedPrompts([]);
+      setSavedPrompts([]);
+      setActiveTab('generate');
+      setError(null);
+      
+      // Close any open modals/pages
+      setShowAuthPage(false);
+      setShowSuccessPage(false);
+    } catch (error) {
+      console.error('Error signing out:', error);
+      setError('Failed to sign out. Please try again.');
+    }
+  };
+
   // Show success page first (highest priority)
   if (showSuccessPage) {
     return <SuccessPage onBackToApp={handleBackToApp} />;
   }
 
-  // Show loading spinner while checking authentication
-  if (authLoading) {
+  // Show loading spinner while checking authentication or subscription
+  if (authLoading || (user && subscriptionLoading)) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-orange-200 rounded-full animate-spin border-t-orange-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <p className="text-gray-600">
+            {authLoading ? 'Loading...' : 'Setting up your account...'}
+          </p>
         </div>
       </div>
     );
@@ -286,6 +324,7 @@ function App() {
           user={user}
           onAuthClick={() => setShowAuthPage(true)}
           onUpgradeClick={handleUpgradeClick}
+          onSignOut={handleSignOut}
         />
         
         <main className="container mx-auto px-4 py-8 max-w-6xl">

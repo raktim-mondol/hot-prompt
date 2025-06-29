@@ -6,10 +6,11 @@ import { useSubscription } from '../hooks/useSubscription';
 
 interface UserProfileProps {
   onUpgradeClick: () => void;
+  onSignOut: () => void;
 }
 
-export const UserProfile: React.FC<UserProfileProps> = ({ onUpgradeClick }) => {
-  const { user, signOut } = useAuth();
+export const UserProfile: React.FC<UserProfileProps> = ({ onUpgradeClick, onSignOut }) => {
+  const { user } = useAuth();
   const { subscription, usage, loading } = useSubscription();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -82,8 +83,8 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onUpgradeClick }) => {
   }, [isOpen]);
 
   const handleSignOut = async () => {
-    await signOut();
     setIsOpen(false);
+    await onSignOut();
   };
 
   const toggleDropdown = () => {

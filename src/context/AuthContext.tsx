@@ -249,11 +249,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const signOut = async () => {
     console.log('Signing out...');
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error('Sign out error:', error);
+    
+    try {
+      // Clear any local storage
+      localStorage.removeItem('supabase.auth.token');
+      sessionStorage.removeItem('supabase.auth.token');
+      
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Sign out error:', error);
+        return { error };
+      }
+      
+      // Force clear state immediately
+      setUser(null);
+      setSession(null);
+      
+      console.log('Successfully signed out');
+      return { error: null };
+    } catch (err) {
+      console.error('Unexpected sign out error:', err);
+      return { error: err as AuthError };
     }
-    return { error };
   };
 
   const value = {
