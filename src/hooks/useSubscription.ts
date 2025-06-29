@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 
@@ -31,6 +31,7 @@ export const useSubscription = () => {
   const [usage, setUsage] = useState<UserUsage | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const fetchingRef = useRef(false);
 
   const fetchSubscriptionData = useCallback(async () => {
     if (!user) {
@@ -39,6 +40,13 @@ export const useSubscription = () => {
       setLoading(false);
       return;
     }
+
+    // Prevent multiple simultaneous fetches
+    if (fetchingRef.current) {
+      return;
+    }
+
+    fetchingRef.current = true;
 
     try {
       setLoading(true);
@@ -121,6 +129,7 @@ export const useSubscription = () => {
       }
     } finally {
       setLoading(false);
+      fetchingRef.current = false;
     }
   }, [user]);
 
@@ -173,6 +182,16 @@ export const useSubscription = () => {
       }
 
       console.log('Usage incremented successfully:', data);
+      
+      // Update local state immediately to prevent flicker
+      if (usage) {
+        setUsage(prev => prev ? {
+          ...prev,
+          prompts_used: prev.prompts_used + 1,
+          updated_at: new Date().toISOString()
+        } : prev);
+      }
+      
       return data;
     } catch (err) {
       console.error('Error incrementing usage:', err);

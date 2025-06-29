@@ -23,6 +23,7 @@ function App() {
   const { user, loading: authLoading, signOut } = useAuth();
   const { 
     subscription, 
+    usage,
     canGeneratePrompt, 
     incrementUsage, 
     getRemainingPrompts,
@@ -179,19 +180,24 @@ function App() {
       setGeneratedPrompts(mockPrompts);
       console.log('Generated prompts:', mockPrompts);
 
-      // Increment usage count and immediately refresh subscription data
+      // Increment usage count in the background without waiting
       console.log('Incrementing usage...');
-      const success = await incrementUsage();
-      if (!success) {
-        console.warn('Failed to increment usage count');
-        setError('Generated prompt but failed to update usage count. Please refresh the page.');
-      } else {
-        console.log('Usage incremented successfully');
-        // Force immediate refresh of subscription data to update usage indicator
-        setTimeout(() => {
-          refetchSubscription();
-        }, 1000);
-      }
+      incrementUsage().then((success) => {
+        if (!success) {
+          console.warn('Failed to increment usage count');
+          // Don't show error to user as the prompt was generated successfully
+        } else {
+          console.log('Usage incremented successfully');
+          // Refresh subscription data in background after a delay
+          setTimeout(() => {
+            refetchSubscription();
+          }, 2000);
+        }
+      }).catch((err) => {
+        console.error('Error incrementing usage:', err);
+        // Don't show error to user as the prompt was generated successfully
+      });
+
     } catch (err) {
       console.error('Error in handleGenerate:', err);
       setError('Failed to generate prompts. Please try again.');
