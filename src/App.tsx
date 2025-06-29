@@ -10,6 +10,7 @@ import { LoadingSpinner } from './components/LoadingSpinner';
 import { ErrorMessage } from './components/ErrorMessage';
 import { UsageIndicator } from './components/UsageIndicator';
 import { PricingModal } from './components/PricingModal';
+import { PricingSection } from './components/PricingSection';
 
 export interface Prompt {
   id: string;
@@ -34,7 +35,7 @@ function App() {
   const [savedPrompts, setSavedPrompts] = useState<Prompt[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'generate' | 'saved'>('generate');
+  const [activeTab, setActiveTab] = useState<'generate' | 'saved' | 'pricing'>('generate');
   const [showAuthPage, setShowAuthPage] = useState(false);
   const [showPricingModal, setShowPricingModal] = useState(false);
 
@@ -163,7 +164,7 @@ function App() {
     setSavedPrompts(prev => prev.filter(p => p.id !== promptId));
   };
 
-  const handleTabChange = (tab: 'generate' | 'saved') => {
+  const handleTabChange = (tab: 'generate' | 'saved' | 'pricing') => {
     // Check if user is authenticated for saved tab
     if (tab === 'saved' && !user) {
       setShowAuthPage(true);
@@ -210,7 +211,7 @@ function App() {
           )}
 
           {/* Usage Indicator - Show when user is logged in */}
-          {user && (
+          {user && activeTab !== 'pricing' && (
             <div className="mb-6">
               <UsageIndicator onUpgradeClick={() => setShowPricingModal(true)} />
             </div>
@@ -235,10 +236,15 @@ function App() {
                 />
               )}
             </div>
-          ) : (
+          ) : activeTab === 'saved' ? (
             <SavedPrompts
               prompts={savedPrompts}
               onRemove={handleRemoveSaved}
+            />
+          ) : (
+            <PricingSection
+              onUpgradeClick={() => setShowPricingModal(true)}
+              currentPlan={subscription?.plan_type}
             />
           )}
         </main>
