@@ -145,15 +145,10 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onUpgradeClick }) => {
             </div>
 
             {/* Subscription End Date */}
-            {subscription?.plan_type !== 'free' && (
+            {subscription?.plan_type !== 'free' && subscription?.current_period_end && (
               <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
                 <Calendar className="w-4 h-4" />
-                <span>
-                  {subscription?.current_period_end 
-                    ? `Renews on ${getSubscriptionEndDate()}`
-                    : 'Active subscription'
-                  }
-                </span>
+                <span>Ends on {getSubscriptionEndDate()}</span>
               </div>
             )}
 
