@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { User, LogOut, Calendar, Crown, Zap, Gift, ChevronDown } from 'lucide-react';
+import { User, LogOut, Calendar, Crown, Zap, Gift, ChevronDown, Settings } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSubscription } from '../hooks/useSubscription';
 
@@ -114,14 +114,13 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onUpgradeClick }) => {
         <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
-      {/* Dropdown Menu - Fixed positioning and maximum z-index */}
+      {/* Dropdown Menu */}
       {isOpen && (
-        <>
-          {/* Backdrop overlay to ensure dropdown appears above everything */}
-          <div className="fixed inset-0 z-[99998]" onClick={() => setIsOpen(false)} />
-          
-          {/* Dropdown content with maximum z-index */}
-          <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-200 z-[99999] overflow-hidden">
+        <div className="fixed inset-0 z-[9999]" onClick={() => setIsOpen(false)}>
+          <div 
+            className="absolute right-4 top-20 w-80 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Header */}
             <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-red-50">
               <div className="flex items-center space-x-3">
@@ -133,7 +132,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onUpgradeClick }) => {
                     {user.email}
                   </div>
                   <div className="text-sm text-gray-600">
-                    Account
+                    Account Settings
                   </div>
                 </div>
               </div>
@@ -150,10 +149,15 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onUpgradeClick }) => {
               </div>
 
               {/* Subscription End Date */}
-              {subscription?.plan_type !== 'free' && subscription?.current_period_end && (
+              {subscription?.plan_type !== 'free' && (
                 <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
                   <Calendar className="w-4 h-4" />
-                  <span>Ends on {getSubscriptionEndDate()}</span>
+                  <span>
+                    {subscription?.current_period_end 
+                      ? `Renews on ${getSubscriptionEndDate()}`
+                      : 'Active subscription'
+                    }
+                  </span>
                 </div>
               )}
 
@@ -207,6 +211,17 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onUpgradeClick }) => {
             {/* Menu Items */}
             <div className="py-2">
               <button
+                onClick={() => {
+                  // Add settings functionality here if needed
+                  setIsOpen(false);
+                }}
+                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-3 transition-colors"
+              >
+                <Settings className="w-4 h-4" />
+                <span>Account Settings</span>
+              </button>
+              
+              <button
                 onClick={handleSignOut}
                 className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center space-x-3 transition-colors"
               >
@@ -215,7 +230,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onUpgradeClick }) => {
               </button>
             </div>
           </div>
-        </>
+        </div>
       )}
     </div>
   );

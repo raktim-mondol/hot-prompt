@@ -8,6 +8,7 @@ import { GeneratedPrompts } from './components/GeneratedPrompts';
 import { SavedPrompts } from './components/SavedPrompts';
 import { LoadingSpinner } from './components/LoadingSpinner';
 import { ErrorMessage } from './components/ErrorMessage';
+import { UsageIndicator } from './components/UsageIndicator';
 import { PricingSection } from './components/PricingSection';
 import { SuccessPage } from './components/SuccessPage';
 
@@ -89,7 +90,17 @@ function App() {
     if (user) {
       const saved = localStorage.getItem(`savedPrompts_${user.id}`);
       if (saved) {
-        setSavedPrompts(JSON.parse(saved));
+        try {
+          const parsedPrompts = JSON.parse(saved);
+          console.log('Loaded saved prompts for user:', user.id, parsedPrompts);
+          setSavedPrompts(parsedPrompts);
+        } catch (error) {
+          console.error('Error parsing saved prompts:', error);
+          setSavedPrompts([]);
+        }
+      } else {
+        console.log('No saved prompts found for user:', user.id);
+        setSavedPrompts([]);
       }
     } else {
       // Clear saved prompts when user signs out
@@ -108,6 +119,7 @@ function App() {
   // Save prompts to localStorage whenever savedPrompts changes
   useEffect(() => {
     if (user && savedPrompts.length >= 0) {
+      console.log('Saving prompts to localStorage for user:', user.id, savedPrompts);
       localStorage.setItem(`savedPrompts_${user.id}`, JSON.stringify(savedPrompts));
     }
   }, [savedPrompts, user]);
@@ -204,12 +216,18 @@ function App() {
     setSavedPrompts(prev => {
       const existing = prev.find(p => p.id === prompt.id);
       if (existing) return prev;
-      return [updatedPrompt, ...prev];
+      const newSavedPrompts = [updatedPrompt, ...prev];
+      console.log('Adding prompt to saved:', updatedPrompt);
+      return newSavedPrompts;
     });
   };
 
   const handleRemoveSaved = (promptId: string) => {
-    setSavedPrompts(prev => prev.filter(p => p.id !== promptId));
+    setSavedPrompts(prev => {
+      const newSavedPrompts = prev.filter(p => p.id !== promptId);
+      console.log('Removing prompt from saved:', promptId);
+      return newSavedPrompts;
+    });
   };
 
   const handleTabChange = (tab: 'generate' | 'saved' | 'pricing') => {
@@ -274,6 +292,13 @@ function App() {
         <main className="container mx-auto px-4 py-8 max-w-6xl">
           {error && (
             <ErrorMessage message={error} onClear={clearError} />
+          )}
+
+          {/* Usage Indicator - Show when user is logged in, positioned in main content */}
+          {user && (
+            <div className="flex justify-end mb-6">
+              <UsageIndicator onUpgradeClick={handleUpgradeClick} />
+            </div>
           )}
 
           {activeTab === 'generate' ? (
