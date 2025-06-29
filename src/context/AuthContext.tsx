@@ -36,15 +36,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       console.log('Ensuring user records exist for:', userId);
       
-      // Call the database function to check and create records if needed
-      const { data, error } = await supabase.rpc('check_and_fix_user_records', {
+      // Call the robust database function to check and create records if needed
+      const { data, error } = await supabase.rpc('ensure_user_records_robust', {
         user_uuid: userId
       });
 
       if (error) {
         console.error('Error ensuring user records:', error);
         
-        // Fallback: try to create records manually
+        // Fallback: try the simpler function
         const { error: fallbackError } = await supabase.rpc('ensure_user_records', {
           user_uuid: userId
         });
@@ -180,11 +180,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       // If sign up was successful but user needs email confirmation
       if (result.data.user && !result.error) {
+        console.log('Sign up successful, user created:', result.data.user.id);
+        
         // Try to ensure user records are created even if trigger fails
         if (result.data.user.id) {
+          // Small delay to let the trigger run first, then ensure records exist
           setTimeout(async () => {
             await ensureUserRecords(result.data.user!.id);
-          }, 1000); // Small delay to let the trigger run first
+          }, 2000);
         }
       }
 

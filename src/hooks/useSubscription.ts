@@ -33,19 +33,26 @@ export const useSubscription = () => {
   const [error, setError] = useState<string | null>(null);
 
   const ensureUserRecords = async () => {
-    if (!user) return;
+    if (!user) return false;
 
     try {
-      // Call the function to ensure user has all required records
-      const { error: ensureError } = await supabase.rpc('ensure_user_records', {
+      console.log('Ensuring user records for:', user.id);
+      
+      // Call the robust function to ensure user has all required records
+      const { data, error: ensureError } = await supabase.rpc('ensure_user_records_robust', {
         user_uuid: user.id
       });
 
       if (ensureError) {
         console.error('Error ensuring user records:', ensureError);
+        return false;
       }
+
+      console.log('User records ensured:', data);
+      return data?.success || false;
     } catch (err) {
-      console.error('Error calling ensure_user_records:', err);
+      console.error('Error calling ensure_user_records_robust:', err);
+      return false;
     }
   };
 
@@ -61,90 +68,116 @@ export const useSubscription = () => {
       setLoading(true);
       setError(null);
 
+      console.log('Fetching subscription data for user:', user.id);
+
       // First ensure user has all required records
-      await ensureUserRecords();
-
-      // Fetch subscription data
-      const { data: subscriptionData, error: subscriptionError } = await supabase
-        .from('user_subscriptions')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (subscriptionError) {
-        console.error('Subscription fetch error:', subscriptionError);
-        throw subscriptionError;
+      const recordsEnsured = await ensureUserRecords();
+      if (!recordsEnsured) {
+        console.warn('Failed to ensure user records, continuing with fetch...');
       }
 
-      // Fetch usage data
-      const { data: usageData, error: usageError } = await supabase
-        .from('user_usage')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
+      // Fetch subscription data with retry logic
+      let subscriptionData = null;
+      let usageData = null;
+      let retryCount = 0;
+      const maxRetries = 3;
 
-      if (usageError) {
-        console.error('Usage fetch error:', usageError);
-        throw usageError;
-      }
+      while (retryCount < maxRetries && (!subscriptionData || !usageData)) {
+        if (retryCount > 0) {
+          console.log(`Retry ${retryCount} for fetching user data...`);
+          await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+        }
 
-      // If we still don't have data, create default records
-      if (!subscriptionData || !usageData) {
-        console.log('Missing data, creating default records...');
-        
-        // Create subscription record if missing
+        // Fetch subscription data
         if (!subscriptionData) {
-          const { data: newSub, error: createSubError } = await supabase
+          const { data: subData, error: subscriptionError } = await supabase
             .from('user_subscriptions')
-            .insert({
-              user_id: user.id,
-              plan_type: 'free',
-              status: 'active'
-            })
-            .select()
-            .single();
+            .select('*')
+            .eq('user_id', user.id)
+            .maybeSingle();
 
-          if (createSubError) {
-            console.error('Error creating subscription:', createSubError);
+          if (subscriptionError) {
+            console.error('Subscription fetch error:', subscriptionError);
+            if (retryCount === maxRetries - 1) {
+              throw subscriptionError;
+            }
           } else {
-            setSubscription(newSub);
+            subscriptionData = subData;
           }
-        } else {
-          setSubscription(subscriptionData);
         }
 
-        // Create usage record if missing
+        // Fetch usage data
         if (!usageData) {
-          const { data: newUsage, error: createUsageError } = await supabase
+          const { data: usageDataResult, error: usageError } = await supabase
             .from('user_usage')
-            .insert({
-              user_id: user.id,
-              prompts_used: 0,
-              prompts_limit: 3,
-              reset_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-            })
-            .select()
-            .single();
+            .select('*')
+            .eq('user_id', user.id)
+            .maybeSingle();
 
-          if (createUsageError) {
-            console.error('Error creating usage:', createUsageError);
+          if (usageError) {
+            console.error('Usage fetch error:', usageError);
+            if (retryCount === maxRetries - 1) {
+              throw usageError;
+            }
           } else {
-            setUsage(newUsage);
+            usageData = usageDataResult;
           }
-        } else {
-          setUsage(usageData);
         }
-      } else {
-        setSubscription(subscriptionData);
-        setUsage(usageData);
+
+        retryCount++;
       }
+
+      // If we still don't have data after retries, create default records
+      if (!subscriptionData || !usageData) {
+        console.warn('Still missing data after retries, creating defaults...');
+        
+        // Try one more time to ensure records
+        await ensureUserRecords();
+        
+        // Set default values
+        if (!subscriptionData) {
+          subscriptionData = {
+            id: 'default',
+            user_id: user.id,
+            stripe_customer_id: null,
+            stripe_subscription_id: null,
+            plan_type: 'free',
+            status: 'active',
+            current_period_start: null,
+            current_period_end: null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+        }
+        
+        if (!usageData) {
+          usageData = {
+            id: 'default',
+            user_id: user.id,
+            prompts_used: 0,
+            prompts_limit: 3,
+            reset_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+        }
+      }
+
+      setSubscription(subscriptionData);
+      setUsage(usageData);
+      
+      console.log('Successfully loaded subscription data:', {
+        subscription: subscriptionData,
+        usage: usageData
+      });
+
     } catch (err) {
       console.error('Error fetching subscription data:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch subscription data');
       
-      // Set default values on error
+      // Set default values on error to prevent app from breaking
       setSubscription({
-        id: 'default',
+        id: 'error-default',
         user_id: user.id,
         stripe_customer_id: null,
         stripe_subscription_id: null,
@@ -157,7 +190,7 @@ export const useSubscription = () => {
       });
       
       setUsage({
-        id: 'default',
+        id: 'error-default',
         user_id: user.id,
         prompts_used: 0,
         prompts_limit: 3,
@@ -175,9 +208,14 @@ export const useSubscription = () => {
   }, [fetchSubscriptionData]);
 
   const canGeneratePrompt = async (): Promise<boolean> => {
-    if (!user) return false;
+    if (!user) {
+      console.log('No user, cannot generate prompt');
+      return false;
+    }
 
     try {
+      console.log('Checking if user can generate prompt...');
+      
       const { data, error } = await supabase.rpc('can_generate_prompt', {
         user_uuid: user.id
       });
@@ -187,6 +225,7 @@ export const useSubscription = () => {
         return false;
       }
 
+      console.log('Can generate prompt result:', data);
       return data;
     } catch (err) {
       console.error('Error checking prompt generation capability:', err);
@@ -195,9 +234,14 @@ export const useSubscription = () => {
   };
 
   const incrementUsage = async (): Promise<boolean> => {
-    if (!user) return false;
+    if (!user) {
+      console.log('No user, cannot increment usage');
+      return false;
+    }
 
     try {
+      console.log('Incrementing usage for user:', user.id);
+      
       const { data, error } = await supabase.rpc('increment_prompt_usage', {
         user_uuid: user.id
       });
@@ -207,8 +251,13 @@ export const useSubscription = () => {
         return false;
       }
 
+      console.log('Usage incremented successfully:', data);
+      
       // Immediately fetch fresh data to update the UI
-      await fetchSubscriptionData();
+      setTimeout(() => {
+        fetchSubscriptionData();
+      }, 500);
+      
       return data;
     } catch (err) {
       console.error('Error incrementing usage:', err);
