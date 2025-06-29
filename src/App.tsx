@@ -8,6 +8,7 @@ import { GeneratedPrompts } from './components/GeneratedPrompts';
 import { SavedPrompts } from './components/SavedPrompts';
 import { LoadingSpinner } from './components/LoadingSpinner';
 import { ErrorMessage } from './components/ErrorMessage';
+import { UsageIndicator } from './components/UsageIndicator';
 import { PricingSection } from './components/PricingSection';
 import { SuccessPage } from './components/SuccessPage';
 
@@ -26,7 +27,8 @@ function App() {
     canGeneratePrompt, 
     incrementUsage, 
     getRemainingPrompts,
-    isSubscriptionActive 
+    isSubscriptionActive,
+    refetch: refetchSubscription
   } = useSubscription();
   
   const [input, setInput] = useState('');
@@ -38,15 +40,24 @@ function App() {
   const [showAuthPage, setShowAuthPage] = useState(false);
   const [showSuccessPage, setShowSuccessPage] = useState(false);
 
-  // Check for success parameter in URL
+  // Check for success parameter in URL or success path
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('success') === 'true' || window.location.pathname === '/success') {
+    const sessionId = urlParams.get('session_id');
+    
+    if (sessionId || window.location.pathname === '/success' || urlParams.get('success') === 'true') {
       setShowSuccessPage(true);
       // Clean up URL
       window.history.replaceState({}, document.title, window.location.pathname);
+      
+      // Refetch subscription data after successful payment
+      if (user) {
+        setTimeout(() => {
+          refetchSubscription();
+        }, 2000); // Give some time for webhook to process
+      }
     }
-  }, []);
+  }, [user, refetchSubscription]);
 
   // Load saved prompts from localStorage on mount and when user changes
   useEffect(() => {
@@ -187,6 +198,8 @@ function App() {
   const handleBackToApp = () => {
     setShowSuccessPage(false);
     setActiveTab('generate');
+    // Refetch subscription data to get updated limits
+    refetchSubscription();
   };
 
   // Show success page
@@ -227,6 +240,13 @@ function App() {
         <main className="container mx-auto px-4 py-8 max-w-6xl">
           {error && (
             <ErrorMessage message={error} onClear={clearError} />
+          )}
+
+          {/* Usage Indicator - Show when user is logged in */}
+          {user && (
+            <div className="mb-6">
+              <UsageIndicator onUpgradeClick={() => setActiveTab('pricing')} />
+            </div>
           )}
 
           {activeTab === 'generate' ? (
