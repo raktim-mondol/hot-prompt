@@ -1,5 +1,6 @@
 import React from 'react';
-import { Flame, Bookmark } from 'lucide-react';
+import { Flame, Bookmark, LogOut, User } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 interface HeaderProps {
   activeTab: 'generate' | 'saved';
@@ -7,6 +8,12 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab }) => {
+  const { user, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
   return (
     <header className="bg-white/60 backdrop-blur-xl border-b border-orange-200/50">
       <div className="container mx-auto px-4 py-6 max-w-6xl">
@@ -21,30 +28,52 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab }) => {
             </div>
           </div>
 
-          <nav className="flex space-x-1 bg-orange-100/50 rounded-xl p-1">
-            <button
-              onClick={() => setActiveTab('generate')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                activeTab === 'generate'
-                  ? 'bg-white text-orange-600 shadow-lg'
-                  : 'text-gray-600 hover:text-orange-600 hover:bg-white/50'
-              }`}
-            >
-              <Flame className="w-4 h-4 inline mr-2" />
-              Generate
-            </button>
-            <button
-              onClick={() => setActiveTab('saved')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                activeTab === 'saved'
-                  ? 'bg-white text-orange-600 shadow-lg'
-                  : 'text-gray-600 hover:text-orange-600 hover:bg-white/50'
-              }`}
-            >
-              <Bookmark className="w-4 h-4 inline mr-2" />
-              Saved
-            </button>
-          </nav>
+          <div className="flex items-center space-x-4">
+            {/* Navigation */}
+            <nav className="flex space-x-1 bg-orange-100/50 rounded-xl p-1">
+              <button
+                onClick={() => setActiveTab('generate')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  activeTab === 'generate'
+                    ? 'bg-white text-orange-600 shadow-lg'
+                    : 'text-gray-600 hover:text-orange-600 hover:bg-white/50'
+                }`}
+              >
+                <Flame className="w-4 h-4 inline mr-2" />
+                Generate
+              </button>
+              <button
+                onClick={() => setActiveTab('saved')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  activeTab === 'saved'
+                    ? 'bg-white text-orange-600 shadow-lg'
+                    : 'text-gray-600 hover:text-orange-600 hover:bg-white/50'
+                }`}
+              >
+                <Bookmark className="w-4 h-4 inline mr-2" />
+                Saved
+              </button>
+            </nav>
+
+            {/* User Menu */}
+            <div className="flex items-center space-x-3 pl-4 border-l border-orange-200">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                  <User className="w-4 h-4 text-orange-600" />
+                </div>
+                <span className="text-sm text-gray-700 hidden sm:block">
+                  {user?.email}
+                </span>
+              </div>
+              <button
+                onClick={handleSignOut}
+                className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-200"
+                title="Sign out"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </header>

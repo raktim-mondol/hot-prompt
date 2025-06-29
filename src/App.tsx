@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from './context/AuthContext';
+import { AuthForm } from './components/AuthForm';
 import { Header } from './components/Header';
 import { PromptInput } from './components/PromptInput';
 import { GeneratedPrompts } from './components/GeneratedPrompts';
@@ -11,9 +13,11 @@ export interface Prompt {
   content: string;
   timestamp: number;
   isFavorite?: boolean;
+  userId?: string;
 }
 
 function App() {
+  const { user, loading: authLoading } = useAuth();
   const [input, setInput] = useState('');
   const [generatedPrompts, setGeneratedPrompts] = useState<Prompt[]>([]);
   const [savedPrompts, setSavedPrompts] = useState<Prompt[]>([]);
@@ -21,18 +25,22 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'generate' | 'saved'>('generate');
 
-  // Load saved prompts from localStorage on mount
+  // Load saved prompts from localStorage on mount and when user changes
   useEffect(() => {
-    const saved = localStorage.getItem('savedPrompts');
-    if (saved) {
-      setSavedPrompts(JSON.parse(saved));
+    if (user) {
+      const saved = localStorage.getItem(`savedPrompts_${user.id}`);
+      if (saved) {
+        setSavedPrompts(JSON.parse(saved));
+      }
     }
-  }, []);
+  }, [user]);
 
   // Save prompts to localStorage whenever savedPrompts changes
   useEffect(() => {
-    localStorage.setItem('savedPrompts', JSON.stringify(savedPrompts));
-  }, [savedPrompts]);
+    if (user && savedPrompts.length >= 0) {
+      localStorage.setItem(`savedPrompts_${user.id}`, JSON.stringify(savedPrompts));
+    }
+  }, [savedPrompts, user]);
 
   const handleGenerate = async () => {
     if (!input.trim()) {
@@ -71,12 +79,13 @@ function App() {
     return [{
       id: `prompt-${Date.now()}`,
       content: randomTemplate,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      userId: user?.id
     }];
   };
 
   const handleSavePrompt = (prompt: Prompt) => {
-    const updatedPrompt = { ...prompt, isFavorite: true };
+    const updatedPrompt = { ...prompt, isFavorite: true, userId: user?.id };
     setSavedPrompts(prev => {
       const existing = prev.find(p => p.id === prompt.id);
       if (existing) return prev;
@@ -90,6 +99,24 @@ function App() {
 
   const clearError = () => setError(null);
 
+  // Show loading spinner while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-orange-200 rounded-full animate-spin border-t-orange-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show auth form if user is not logged in
+  if (!user) {
+    return <AuthForm />;
+  }
+
+  // Show main app if user is logged in
   return (
     <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50">
       <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg fill=%22%23F97316%22 fill-opacity=%220.03%22%3E%3Ccircle cx=%2230%22 cy=%2230%22 r=%222%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-50"></div>
