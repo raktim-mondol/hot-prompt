@@ -222,6 +222,10 @@ function App() {
     setActiveTab(tab);
   };
 
+  const handleUpgradeClick = () => {
+    setActiveTab('pricing');
+  };
+
   const clearError = () => setError(null);
 
   const handleBackToApp = () => {
@@ -265,6 +269,7 @@ function App() {
           setActiveTab={handleTabChange}
           user={user}
           onAuthClick={() => setShowAuthPage(true)}
+          onUpgradeClick={handleUpgradeClick}
         />
         
         <main className="container mx-auto px-4 py-8 max-w-6xl">
@@ -275,7 +280,7 @@ function App() {
           {/* Usage Indicator - Show when user is logged in, positioned in main content */}
           {user && (
             <div className="flex justify-end mb-6">
-              <UsageIndicator onUpgradeClick={() => setActiveTab('pricing')} />
+              <UsageIndicator onUpgradeClick={handleUpgradeClick} />
             </div>
           )}
 

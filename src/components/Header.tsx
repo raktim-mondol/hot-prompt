@@ -1,21 +1,22 @@
 import React from 'react';
-import { Flame, Bookmark, LogOut, User, UserPlus, CreditCard } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { Flame, Bookmark, CreditCard, UserPlus } from 'lucide-react';
+import { UserProfile } from './UserProfile';
 
 interface HeaderProps {
   activeTab: 'generate' | 'saved' | 'pricing';
   setActiveTab: (tab: 'generate' | 'saved' | 'pricing') => void;
   user: any;
   onAuthClick: () => void;
+  onUpgradeClick: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, user, onAuthClick }) => {
-  const { signOut } = useAuth();
-
-  const handleSignOut = async () => {
-    await signOut();
-  };
-
+export const Header: React.FC<HeaderProps> = ({ 
+  activeTab, 
+  setActiveTab, 
+  user, 
+  onAuthClick,
+  onUpgradeClick 
+}) => {
   return (
     <header className="bg-white/60 backdrop-blur-xl border-b border-orange-200/50">
       <div className="container mx-auto px-4 py-6 max-w-6xl">
@@ -73,25 +74,9 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, user, o
             )}
 
             {/* User Menu */}
-            <div className={`flex items-center space-x-3 ${user ? 'pl-4 border-l border-orange-200' : ''}`}>
+            <div className={`flex items-center ${user ? 'pl-4 border-l border-orange-200' : ''}`}>
               {user ? (
-                <>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                      <User className="w-4 h-4 text-orange-600" />
-                    </div>
-                    <span className="text-sm text-gray-700 hidden sm:block">
-                      {user?.email}
-                    </span>
-                  </div>
-                  <button
-                    onClick={handleSignOut}
-                    className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-200"
-                    title="Sign out"
-                  >
-                    <LogOut className="w-4 h-4" />
-                  </button>
-                </>
+                <UserProfile onUpgradeClick={onUpgradeClick} />
               ) : (
                 <button
                   onClick={onAuthClick}
