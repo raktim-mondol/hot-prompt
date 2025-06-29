@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 
@@ -49,7 +49,7 @@ export const useSubscription = () => {
     }
   };
 
-  const fetchSubscriptionData = async () => {
+  const fetchSubscriptionData = useCallback(async () => {
     if (!user) {
       setSubscription(null);
       setUsage(null);
@@ -168,11 +168,11 @@ export const useSubscription = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     fetchSubscriptionData();
-  }, [user]);
+  }, [fetchSubscriptionData]);
 
   const canGeneratePrompt = async (): Promise<boolean> => {
     if (!user) return false;
@@ -207,7 +207,7 @@ export const useSubscription = () => {
         return false;
       }
 
-      // Refresh usage data
+      // Immediately fetch fresh data to update the UI
       await fetchSubscriptionData();
       return data;
     } catch (err) {

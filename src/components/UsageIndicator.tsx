@@ -37,15 +37,16 @@ export const UsageIndicator: React.FC<UsageIndicatorProps> = ({ onUpgradeClick }
   // Show loading state
   if (loading) {
     return (
-      <div className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-lg shadow-lg overflow-hidden w-48">
+      <div className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-lg shadow-lg overflow-hidden w-64">
         {/* Animated loading bar */}
-        <div className="h-2 bg-gray-200 overflow-hidden">
+        <div className="h-3 bg-gray-200 overflow-hidden">
           <div className="h-full bg-gradient-to-r from-orange-400 to-red-500 animate-pulse w-full"></div>
         </div>
         
         <div className="px-4 py-3">
-          <div className="animate-pulse">
-            <div className="h-4 bg-gray-200 rounded w-20"></div>
+          <div className="animate-pulse flex items-center justify-between">
+            <div className="h-4 bg-gray-200 rounded w-16"></div>
+            <div className="h-4 bg-gray-200 rounded w-12"></div>
           </div>
         </div>
       </div>
@@ -55,15 +56,14 @@ export const UsageIndicator: React.FC<UsageIndicatorProps> = ({ onUpgradeClick }
   // If no data, show default
   if (!usage || !subscription) {
     return (
-      <div className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-lg shadow-lg overflow-hidden w-48">
-        <div className="h-2 bg-gray-200">
+      <div className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-lg shadow-lg overflow-hidden w-64">
+        <div className="h-3 bg-gray-200">
           <div className="h-full bg-green-500 w-full"></div>
         </div>
         
-        <div className="px-4 py-3">
-          <div className="text-sm font-medium text-gray-700">
-            Usage: 0/3
-          </div>
+        <div className="px-4 py-3 flex items-center justify-between">
+          <span className="text-sm font-medium text-gray-700">Usage</span>
+          <span className="text-sm text-gray-600">0/3</span>
         </div>
       </div>
     );
@@ -80,31 +80,31 @@ export const UsageIndicator: React.FC<UsageIndicatorProps> = ({ onUpgradeClick }
   };
 
   return (
-    <div className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-lg shadow-lg overflow-hidden w-48">
-      {/* Top Progress Bar - Made bigger */}
-      <div className="h-2 bg-gray-200">
+    <div className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-lg shadow-lg overflow-hidden w-64">
+      {/* Top Progress Bar - Made bigger as requested */}
+      <div className="h-3 bg-gray-200">
         <div
           className={`h-full transition-all duration-500 ${getProgressColor()}`}
           style={{ width: `${Math.min(100, usagePercentage)}%` }}
         ></div>
       </div>
 
+      {/* Single line layout with Usage label and count */}
       <div className="px-4 py-3 flex items-center justify-between">
-        <div>
-          <div className="text-xs text-gray-500 mb-1">Usage</div>
-          <div className="text-sm font-medium text-gray-700">
+        <span className="text-sm font-medium text-gray-700">Usage</span>
+        <div className="flex items-center space-x-3">
+          <span className="text-sm text-gray-600">
             {usage.prompts_used}/{usage.prompts_limit}
-          </div>
+          </span>
+          {isOutOfPrompts && (
+            <button
+              onClick={onUpgradeClick}
+              className="text-xs bg-orange-500 hover:bg-orange-600 text-white px-2 py-1 rounded transition-colors"
+            >
+              Upgrade
+            </button>
+          )}
         </div>
-
-        {isOutOfPrompts && (
-          <button
-            onClick={onUpgradeClick}
-            className="text-xs bg-orange-500 hover:bg-orange-600 text-white px-2 py-1 rounded transition-colors"
-          >
-            Upgrade
-          </button>
-        )}
       </div>
     </div>
   );

@@ -160,10 +160,13 @@ function App() {
       const mockPrompts = generateMockPrompts(input);
       setGeneratedPrompts(mockPrompts);
 
-      // Increment usage count
+      // Increment usage count and immediately refresh subscription data
       const success = await incrementUsage();
       if (!success) {
         console.warn('Failed to increment usage count');
+      } else {
+        // Force immediate refresh of subscription data to update usage indicator
+        await refetchSubscription();
       }
     } catch (err) {
       setError('Failed to generate prompts. Please try again.');
