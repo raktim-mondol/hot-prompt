@@ -44,15 +44,21 @@ function App() {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const sessionId = urlParams.get('session_id');
+    const currentPath = window.location.pathname;
     
-    if (sessionId || window.location.pathname === '/success' || urlParams.get('success') === 'true') {
+    // Check if we're on the success page or have success parameters
+    if (sessionId || currentPath === '/success' || urlParams.get('success') === 'true') {
+      console.log('Payment success detected, showing success page');
       setShowSuccessPage(true);
-      // Clean up URL
-      window.history.replaceState({}, document.title, window.location.pathname);
+      
+      // Clean up URL without causing a page reload
+      const cleanUrl = window.location.origin + window.location.pathname.replace('/success', '/');
+      window.history.replaceState({}, document.title, cleanUrl);
       
       // Refetch subscription data after successful payment
       if (user) {
         setTimeout(() => {
+          console.log('Refetching subscription data after payment');
           refetchSubscription();
         }, 2000); // Give some time for webhook to process
       }
@@ -196,13 +202,14 @@ function App() {
   const clearError = () => setError(null);
 
   const handleBackToApp = () => {
+    console.log('Returning to main app from success page');
     setShowSuccessPage(false);
     setActiveTab('generate');
     // Refetch subscription data to get updated limits
     refetchSubscription();
   };
 
-  // Show success page
+  // Show success page first (highest priority)
   if (showSuccessPage) {
     return <SuccessPage onBackToApp={handleBackToApp} />;
   }
