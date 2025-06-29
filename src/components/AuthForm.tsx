@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Lock, User, Eye, EyeOff, Flame, Sparkles, Zap, Star, ArrowLeft } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, Flame, Sparkles, Zap, Star, ArrowLeft, CheckCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 interface AuthFormProps {
@@ -14,6 +14,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onBack }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [showEmailSent, setShowEmailSent] = useState(false);
 
   const { signIn, signUp } = useAuth();
 
@@ -32,11 +33,21 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onBack }) => {
           onBack(); // Go back to main app after successful login
         }
       } else {
-        const { error } = await signUp(email, password);
+        const { data, error } = await signUp(email, password);
         if (error) {
           setError(error.message);
         } else {
-          setMessage('Check your email for the confirmation link!');
+          // Check if user needs email confirmation
+          if (data.user && !data.session) {
+            // Email confirmation is required
+            setShowEmailSent(true);
+            setMessage('Please check your email and click the confirmation link to complete your registration.');
+          } else if (data.session) {
+            // User is immediately signed in (email confirmation disabled)
+            if (onBack) {
+              onBack();
+            }
+          }
         }
       }
     } catch (err) {
@@ -50,7 +61,84 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onBack }) => {
     setIsLogin(!isLogin);
     setError(null);
     setMessage(null);
+    setShowEmailSent(false);
   };
+
+  const handleBackToLogin = () => {
+    setShowEmailSent(false);
+    setIsLogin(true);
+    setError(null);
+    setMessage(null);
+  };
+
+  // Show email confirmation screen
+  if (showEmailSent) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg fill=%22%23F97316%22 fill-opacity=%220.03%22%3E%3Ccircle cx=%2230%22 cy=%2230%22 r=%222%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-50"></div>
+        
+        {/* Back Button */}
+        {onBack && (
+          <div className="absolute top-6 left-6 z-20">
+            <button
+              onClick={onBack}
+              className="flex items-center space-x-2 text-gray-600 hover:text-orange-600 transition-colors bg-white/70 backdrop-blur-sm rounded-xl px-4 py-2 shadow-lg hover:shadow-xl"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="text-sm font-medium">Back to App</span>
+            </button>
+          </div>
+        )}
+
+        <div className="relative z-10 flex min-h-screen items-center justify-center p-4">
+          <div className="w-full max-w-md">
+            <div className="bg-white/70 backdrop-blur-xl rounded-2xl border border-orange-200/50 p-8 shadow-2xl text-center">
+              {/* Success Icon */}
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <CheckCircle className="w-8 h-8 text-green-600" />
+              </div>
+
+              {/* Header */}
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">Check Your Email</h2>
+              
+              {/* Message */}
+              <p className="text-gray-600 mb-6 leading-relaxed">
+                We've sent a confirmation link to <strong>{email}</strong>. 
+                Please click the link in your email to verify your account and complete the registration process.
+              </p>
+
+              {/* Instructions */}
+              <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-6 text-left">
+                <h4 className="font-medium text-gray-800 mb-2">What to do next:</h4>
+                <ol className="text-sm text-gray-600 space-y-1">
+                  <li>1. Check your email inbox</li>
+                  <li>2. Look for an email from Hot Prompt</li>
+                  <li>3. Click the confirmation link</li>
+                  <li>4. Return here to sign in</li>
+                </ol>
+              </div>
+
+              {/* Actions */}
+              <div className="space-y-3">
+                <button
+                  onClick={handleBackToLogin}
+                  className="w-full bg-gradient-to-r from-orange-400 to-red-500 hover:from-orange-500 hover:to-red-600 text-white py-3 rounded-xl font-medium transition-all duration-200 transform hover:scale-105 flex items-center justify-center space-x-2 shadow-lg"
+                >
+                  <User className="w-5 h-5" />
+                  <span>Back to Sign In</span>
+                </button>
+                
+                <p className="text-xs text-gray-500">
+                  Didn't receive the email? Check your spam folder or try signing up again.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 relative overflow-hidden">
