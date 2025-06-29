@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { User, LogOut, Calendar, Crown, Zap, Gift, ChevronDown, Settings } from 'lucide-react';
+import { User, LogOut, Calendar, Crown, Zap, Gift, ChevronDown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSubscription } from '../hooks/useSubscription';
 
@@ -128,7 +128,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onUpgradeClick }) => {
                   {user.email}
                 </div>
                 <div className="text-sm text-gray-600">
-                  Account Settings
+                  Account
                 </div>
               </div>
             </div>
@@ -201,17 +201,6 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onUpgradeClick }) => {
 
           {/* Menu Items */}
           <div className="py-2">
-            <button
-              onClick={() => {
-                // Add settings functionality here if needed
-                setIsOpen(false);
-              }}
-              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-3 transition-colors"
-            >
-              <Settings className="w-4 h-4" />
-              <span>Account Settings</span>
-            </button>
-            
             <button
               onClick={handleSignOut}
               className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center space-x-3 transition-colors"
