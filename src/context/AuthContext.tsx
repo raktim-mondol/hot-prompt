@@ -31,7 +31,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Helper function to clean up URL hash
+  // Helper function to clean up URL hash after auth
   const cleanupUrlHash = () => {
     if (window.location.hash && (
       window.location.hash.includes('access_token') || 
@@ -55,22 +55,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         console.log('Initializing auth...');
         
-        // Check if there's a session in the URL (from OAuth callback or email confirmation)
-        const { data, error } = await supabase.auth.getSession();
+        // First, check if there's a session in the URL hash (from OAuth callback or email confirmation)
+        // This is crucial for handling redirects from Supabase
+        const { data: sessionFromUrl, error: sessionError } = await supabase.auth.getSession();
         
-        if (mounted) {
-          if (error) {
-            console.error('Error getting session:', error);
-          } else {
-            console.log('Session data:', data.session ? 'Session found' : 'No session');
-            setSession(data.session);
-            setUser(data.session?.user ?? null);
-          }
-          setLoading(false);
+        if (sessionError) {
+          console.error('Error getting session from URL:', sessionError);
         }
 
-        // Clean up URL hash if it contains auth tokens
-        cleanupUrlHash();
+        // If we have a session from the URL, use it
+        if (sessionFromUrl.session && mounted) {
+          console.log('Found session from URL callback');
+          setSession(sessionFromUrl.session);
+          setUser(sessionFromUrl.session.user);
+          
+          // Clean up the URL hash immediately after successful session retrieval
+          cleanupUrlHash();
+        } else {
+          // No session in URL, check for existing session
+          console.log('No session in URL, checking for existing session');
+        }
+
+        if (mounted) {
+          setLoading(false);
+        }
       } catch (error) {
         console.error('Error initializing auth:', error);
         if (mounted) {
@@ -126,6 +134,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const result = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/`
+      }
     });
     return result;
   };
