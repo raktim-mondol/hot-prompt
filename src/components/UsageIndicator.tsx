@@ -1,5 +1,5 @@
 import React from 'react';
-import { Zap, AlertTriangle, Crown, TrendingUp } from 'lucide-react';
+import { Zap, AlertTriangle, Crown, TrendingUp, RefreshCw } from 'lucide-react';
 import { useSubscription } from '../hooks/useSubscription';
 
 interface UsageIndicatorProps {
@@ -11,19 +11,118 @@ export const UsageIndicator: React.FC<UsageIndicatorProps> = ({ onUpgradeClick }
     usage, 
     subscription, 
     loading, 
+    error,
     getRemainingPrompts, 
     getUsagePercentage,
-    isFreePlan 
+    isFreePlan,
+    refetch
   } = useSubscription();
 
-  if (loading || !usage || !subscription) {
+  // Show error state with retry option
+  if (error) {
     return (
-      <div className="bg-white/70 backdrop-blur-xl rounded-xl border border-orange-200/50 p-4">
-        <div className="animate-pulse flex space-x-4">
-          <div className="rounded-full bg-gray-200 h-10 w-10"></div>
-          <div className="flex-1 space-y-2 py-1">
-            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-            <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+      <div className="bg-white/70 backdrop-blur-xl rounded-xl border border-red-200/50 p-4 shadow-lg">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center">
+              <AlertTriangle className="w-5 h-5 text-red-600" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-red-800">Unable to load usage data</h3>
+              <p className="text-sm text-red-600">Please try refreshing</p>
+            </div>
+          </div>
+          <button
+            onClick={refetch}
+            className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+            title="Retry loading"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="bg-white/70 backdrop-blur-xl rounded-xl border border-orange-200/50 shadow-lg overflow-hidden">
+        {/* Animated loading bar */}
+        <div className="h-2 bg-gray-200 overflow-hidden">
+          <div className="h-full bg-gradient-to-r from-orange-400 to-red-500 animate-pulse"></div>
+        </div>
+        
+        <div className="p-4">
+          <div className="animate-pulse flex space-x-4">
+            <div className="rounded-xl bg-gray-200 h-10 w-10"></div>
+            <div className="flex-1 space-y-2 py-1">
+              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+              <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+            </div>
+          </div>
+          
+          <div className="mt-4 grid grid-cols-3 gap-4">
+            <div className="bg-gray-100 rounded-lg p-3 animate-pulse">
+              <div className="h-6 bg-gray-200 rounded mb-1"></div>
+              <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+            </div>
+            <div className="bg-gray-100 rounded-lg p-3 animate-pulse">
+              <div className="h-6 bg-gray-200 rounded mb-1"></div>
+              <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+            </div>
+            <div className="bg-gray-100 rounded-lg p-3 animate-pulse">
+              <div className="h-6 bg-gray-200 rounded mb-1"></div>
+              <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // If still no data after loading, show default state
+  if (!usage || !subscription) {
+    return (
+      <div className="bg-white/70 backdrop-blur-xl rounded-xl border border-orange-200/50 shadow-lg overflow-hidden">
+        <div className="h-2 bg-gray-200">
+          <div className="h-full bg-green-500 w-full"></div>
+        </div>
+
+        <div className="p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-gray-400 to-gray-600 rounded-xl flex items-center justify-center shadow-lg">
+                <TrendingUp className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-800">Free Plan</h3>
+                <p className="text-sm text-gray-600">3 of 3 prompts left</p>
+              </div>
+            </div>
+
+            <button
+              onClick={onUpgradeClick}
+              className="bg-gradient-to-r from-orange-400 to-red-500 hover:from-orange-500 hover:to-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 shadow-lg flex items-center space-x-1"
+            >
+              <Crown className="w-4 h-4" />
+              <span>Upgrade</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div className="bg-blue-50 rounded-lg p-3">
+              <div className="text-lg font-bold text-blue-600">0</div>
+              <div className="text-xs text-blue-500">Used</div>
+            </div>
+            <div className="bg-green-50 rounded-lg p-3">
+              <div className="text-lg font-bold text-green-600">3</div>
+              <div className="text-xs text-green-500">Remaining</div>
+            </div>
+            <div className="bg-purple-50 rounded-lg p-3">
+              <div className="text-lg font-bold text-purple-600">3</div>
+              <div className="text-xs text-purple-500">Total</div>
+            </div>
           </div>
         </div>
       </div>

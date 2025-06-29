@@ -32,6 +32,23 @@ export const useSubscription = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const ensureUserRecords = async () => {
+    if (!user) return;
+
+    try {
+      // Call the function to ensure user has all required records
+      const { error: ensureError } = await supabase.rpc('ensure_user_records', {
+        user_uuid: user.id
+      });
+
+      if (ensureError) {
+        console.error('Error ensuring user records:', ensureError);
+      }
+    } catch (err) {
+      console.error('Error calling ensure_user_records:', err);
+    }
+  };
+
   const fetchSubscriptionData = async () => {
     if (!user) {
       setSubscription(null);
@@ -44,7 +61,10 @@ export const useSubscription = () => {
       setLoading(true);
       setError(null);
 
-      // Fetch subscription data using maybeSingle() instead of single()
+      // First ensure user has all required records
+      await ensureUserRecords();
+
+      // Fetch subscription data
       const { data: subscriptionData, error: subscriptionError } = await supabase
         .from('user_subscriptions')
         .select('*')
@@ -52,10 +72,11 @@ export const useSubscription = () => {
         .maybeSingle();
 
       if (subscriptionError) {
+        console.error('Subscription fetch error:', subscriptionError);
         throw subscriptionError;
       }
 
-      // Fetch usage data using maybeSingle() instead of single()
+      // Fetch usage data
       const { data: usageData, error: usageError } = await supabase
         .from('user_usage')
         .select('*')
@@ -63,14 +84,87 @@ export const useSubscription = () => {
         .maybeSingle();
 
       if (usageError) {
+        console.error('Usage fetch error:', usageError);
         throw usageError;
       }
 
-      setSubscription(subscriptionData);
-      setUsage(usageData);
+      // If we still don't have data, create default records
+      if (!subscriptionData || !usageData) {
+        console.log('Missing data, creating default records...');
+        
+        // Create subscription record if missing
+        if (!subscriptionData) {
+          const { data: newSub, error: createSubError } = await supabase
+            .from('user_subscriptions')
+            .insert({
+              user_id: user.id,
+              plan_type: 'free',
+              status: 'active'
+            })
+            .select()
+            .single();
+
+          if (createSubError) {
+            console.error('Error creating subscription:', createSubError);
+          } else {
+            setSubscription(newSub);
+          }
+        } else {
+          setSubscription(subscriptionData);
+        }
+
+        // Create usage record if missing
+        if (!usageData) {
+          const { data: newUsage, error: createUsageError } = await supabase
+            .from('user_usage')
+            .insert({
+              user_id: user.id,
+              prompts_used: 0,
+              prompts_limit: 3,
+              reset_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+            })
+            .select()
+            .single();
+
+          if (createUsageError) {
+            console.error('Error creating usage:', createUsageError);
+          } else {
+            setUsage(newUsage);
+          }
+        } else {
+          setUsage(usageData);
+        }
+      } else {
+        setSubscription(subscriptionData);
+        setUsage(usageData);
+      }
     } catch (err) {
       console.error('Error fetching subscription data:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch subscription data');
+      
+      // Set default values on error
+      setSubscription({
+        id: 'default',
+        user_id: user.id,
+        stripe_customer_id: null,
+        stripe_subscription_id: null,
+        plan_type: 'free',
+        status: 'active',
+        current_period_start: null,
+        current_period_end: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+      
+      setUsage({
+        id: 'default',
+        user_id: user.id,
+        prompts_used: 0,
+        prompts_limit: 3,
+        reset_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
     } finally {
       setLoading(false);
     }
