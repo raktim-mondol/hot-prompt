@@ -20,7 +20,7 @@ export const UsageIndicator: React.FC<UsageIndicatorProps> = ({ onUpgradeClick }
   // Show error state with retry option
   if (error) {
     return (
-      <div className="fixed top-4 right-4 z-50 bg-red-50 border border-red-200 rounded-lg px-3 py-2 shadow-lg flex items-center space-x-2">
+      <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 shadow-lg flex items-center space-x-2 mb-6">
         <AlertTriangle className="w-4 h-4 text-red-600" />
         <span className="text-sm text-red-700">Error loading usage</span>
         <button
@@ -37,7 +37,7 @@ export const UsageIndicator: React.FC<UsageIndicatorProps> = ({ onUpgradeClick }
   // Show loading state
   if (loading) {
     return (
-      <div className="fixed top-4 right-4 z-50 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+      <div className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-lg shadow-lg overflow-hidden mb-6">
         {/* Animated loading bar */}
         <div className="h-1 bg-gray-200 overflow-hidden">
           <div className="h-full bg-gradient-to-r from-orange-400 to-red-500 animate-pulse w-full"></div>
@@ -55,7 +55,7 @@ export const UsageIndicator: React.FC<UsageIndicatorProps> = ({ onUpgradeClick }
   // If no data, show default
   if (!usage || !subscription) {
     return (
-      <div className="fixed top-4 right-4 z-50 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+      <div className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-lg shadow-lg overflow-hidden mb-6">
         <div className="h-1 bg-gray-200">
           <div className="h-full bg-green-500 w-full"></div>
         </div>
@@ -79,7 +79,7 @@ export const UsageIndicator: React.FC<UsageIndicatorProps> = ({ onUpgradeClick }
   };
 
   return (
-    <div className="fixed top-4 right-4 z-50 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+    <div className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-lg shadow-lg overflow-hidden mb-6">
       {/* Top Progress Bar */}
       <div className="h-1 bg-gray-200">
         <div
@@ -88,7 +88,7 @@ export const UsageIndicator: React.FC<UsageIndicatorProps> = ({ onUpgradeClick }
         ></div>
       </div>
 
-      <div className="px-3 py-2 flex items-center space-x-3">
+      <div className="px-3 py-2 flex items-center justify-between">
         <div className="text-sm font-medium text-gray-700">
           Usage: {usage.prompts_used}/{usage.prompts_limit}
         </div>
