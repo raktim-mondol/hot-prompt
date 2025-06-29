@@ -302,6 +302,11 @@ function App() {
           <p className="text-gray-600">
             {authLoading ? 'Loading...' : 'Setting up your account...'}
           </p>
+          {user && subscriptionLoading && (
+            <p className="text-sm text-gray-500 mt-2">
+              This should only take a moment
+            </p>
+          )}
         </div>
       </div>
     );

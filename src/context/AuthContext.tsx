@@ -31,37 +31,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Helper function to ensure user has required database records
-  const ensureUserRecords = async (userId: string) => {
-    try {
-      console.log('Ensuring user records exist for:', userId);
-      
-      // Call the robust database function to check and create records if needed
-      const { data, error } = await supabase.rpc('ensure_user_records_robust', {
-        user_uuid: userId
-      });
-
-      if (error) {
-        console.error('Error ensuring user records:', error);
-        
-        // Fallback: try the simpler function
-        const { error: fallbackError } = await supabase.rpc('ensure_user_records', {
-          user_uuid: userId
-        });
-        
-        if (fallbackError) {
-          console.error('Fallback user record creation failed:', fallbackError);
-        } else {
-          console.log('Successfully created user records via fallback');
-        }
-      } else {
-        console.log('User records verified/created:', data);
-      }
-    } catch (err) {
-      console.error('Error in ensureUserRecords:', err);
-    }
-  };
-
   // Helper function to clean up URL hash after auth
   const cleanupUrlHash = () => {
     if (window.location.hash && (
@@ -86,28 +55,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         console.log('Initializing auth...');
         
-        // First, check if there's a session in the URL hash (from OAuth callback or email confirmation)
-        // This is crucial for handling redirects from Supabase
-        const { data: sessionFromUrl, error: sessionError } = await supabase.auth.getSession();
+        // Get current session
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
-          console.error('Error getting session from URL:', sessionError);
+          console.error('Error getting session:', sessionError);
         }
 
-        // If we have a session from the URL, use it
-        if (sessionFromUrl.session && mounted) {
-          console.log('Found session from URL callback');
-          setSession(sessionFromUrl.session);
-          setUser(sessionFromUrl.session.user);
-          
-          // Ensure user has database records
-          await ensureUserRecords(sessionFromUrl.session.user.id);
-          
-          // Clean up the URL hash immediately after successful session retrieval
+        if (sessionData.session && mounted) {
+          console.log('Found existing session for user:', sessionData.session.user.email);
+          setSession(sessionData.session);
+          setUser(sessionData.session.user);
           cleanupUrlHash();
-        } else {
-          // No session in URL, check for existing session
-          console.log('No session in URL, checking for existing session');
         }
 
         if (mounted) {
@@ -136,13 +95,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         // Handle successful authentication events
         if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session) {
-          // Ensure user has database records
-          await ensureUserRecords(session.user.id);
-          
-          // Clean up URL hash after successful OAuth sign in or email confirmation
           cleanupUrlHash();
           
-          // Log successful authentication
           const provider = session.user?.app_metadata?.provider;
           if (provider === 'github') {
             console.log('Successfully signed in with GitHub');
@@ -178,17 +132,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       });
 
-      // If sign up was successful but user needs email confirmation
       if (result.data.user && !result.error) {
         console.log('Sign up successful, user created:', result.data.user.id);
-        
-        // Try to ensure user records are created even if trigger fails
-        if (result.data.user.id) {
-          // Small delay to let the trigger run first, then ensure records exist
-          setTimeout(async () => {
-            await ensureUserRecords(result.data.user!.id);
-          }, 2000);
-        }
       }
 
       return result;
@@ -199,28 +144,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const signIn = async (email: string, password: string, rememberDevice: boolean = true) => {
-    console.log('Attempting to sign in with email:', email, 'Remember device:', rememberDevice);
+    console.log('Attempting to sign in with email:', email);
     
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
-
-    // If sign in was successful and we want to control persistence
-    if (!error && !rememberDevice) {
-      // For session-only persistence, we need to update the session storage
-      // This will make the session expire when the browser tab is closed
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          // Store in sessionStorage instead of localStorage
-          sessionStorage.setItem('supabase.auth.token', JSON.stringify(session));
-          localStorage.removeItem('supabase.auth.token');
-        }
-      } catch (storageError) {
-        console.warn('Could not update session storage:', storageError);
-      }
-    }
 
     return { error };
   };
@@ -251,10 +180,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     console.log('Signing out...');
     
     try {
-      // Clear any local storage
-      localStorage.removeItem('supabase.auth.token');
-      sessionStorage.removeItem('supabase.auth.token');
-      
       const { error } = await supabase.auth.signOut();
       
       if (error) {

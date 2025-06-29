@@ -32,30 +32,6 @@ export const useSubscription = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const ensureUserRecords = async () => {
-    if (!user) return false;
-
-    try {
-      console.log('Ensuring user records for:', user.id);
-      
-      // Call the robust function to ensure user has all required records
-      const { data, error: ensureError } = await supabase.rpc('ensure_user_records_robust', {
-        user_uuid: user.id
-      });
-
-      if (ensureError) {
-        console.error('Error ensuring user records:', ensureError);
-        return false;
-      }
-
-      console.log('User records ensured:', data);
-      return data?.success || false;
-    } catch (err) {
-      console.error('Error calling ensure_user_records_robust:', err);
-      return false;
-    }
-  };
-
   const fetchSubscriptionData = useCallback(async () => {
     if (!user) {
       setSubscription(null);
@@ -68,136 +44,81 @@ export const useSubscription = () => {
       setLoading(true);
       setError(null);
 
-      console.log('Fetching subscription data for user:', user.id);
+      console.log('Setting up user records for:', user.id);
 
-      // First ensure user has all required records
-      const recordsEnsured = await ensureUserRecords();
-      if (!recordsEnsured) {
-        console.warn('Failed to ensure user records, continuing with fetch...');
+      // First, ensure user has all required records
+      const { data: setupResult, error: setupError } = await supabase.rpc('ensure_user_setup', {
+        user_uuid: user.id
+      });
+
+      if (setupError) {
+        console.error('Error setting up user records:', setupError);
+        throw setupError;
       }
 
-      // Fetch subscription data with retry logic
-      let subscriptionData = null;
-      let usageData = null;
-      let retryCount = 0;
-      const maxRetries = 3;
+      console.log('User setup result:', setupResult);
 
-      while (retryCount < maxRetries && (!subscriptionData || !usageData)) {
-        if (retryCount > 0) {
-          console.log(`Retry ${retryCount} for fetching user data...`);
-          await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
-        }
+      // Now fetch the data
+      const [subscriptionResponse, usageResponse] = await Promise.all([
+        supabase
+          .from('user_subscriptions')
+          .select('*')
+          .eq('user_id', user.id)
+          .single(),
+        supabase
+          .from('user_usage')
+          .select('*')
+          .eq('user_id', user.id)
+          .single()
+      ]);
 
-        // Fetch subscription data
-        if (!subscriptionData) {
-          const { data: subData, error: subscriptionError } = await supabase
-            .from('user_subscriptions')
-            .select('*')
-            .eq('user_id', user.id)
-            .maybeSingle();
-
-          if (subscriptionError) {
-            console.error('Subscription fetch error:', subscriptionError);
-            if (retryCount === maxRetries - 1) {
-              throw subscriptionError;
-            }
-          } else {
-            subscriptionData = subData;
-          }
-        }
-
-        // Fetch usage data
-        if (!usageData) {
-          const { data: usageDataResult, error: usageError } = await supabase
-            .from('user_usage')
-            .select('*')
-            .eq('user_id', user.id)
-            .maybeSingle();
-
-          if (usageError) {
-            console.error('Usage fetch error:', usageError);
-            if (retryCount === maxRetries - 1) {
-              throw usageError;
-            }
-          } else {
-            usageData = usageDataResult;
-          }
-        }
-
-        retryCount++;
+      if (subscriptionResponse.error) {
+        console.error('Subscription fetch error:', subscriptionResponse.error);
+        throw subscriptionResponse.error;
       }
 
-      // If we still don't have data after retries, create default records
-      if (!subscriptionData || !usageData) {
-        console.warn('Still missing data after retries, creating defaults...');
-        
-        // Try one more time to ensure records
-        await ensureUserRecords();
-        
-        // Set default values
-        if (!subscriptionData) {
-          subscriptionData = {
-            id: 'default',
-            user_id: user.id,
-            stripe_customer_id: null,
-            stripe_subscription_id: null,
-            plan_type: 'free',
-            status: 'active',
-            current_period_start: null,
-            current_period_end: null,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          };
-        }
-        
-        if (!usageData) {
-          usageData = {
-            id: 'default',
-            user_id: user.id,
-            prompts_used: 0,
-            prompts_limit: 3,
-            reset_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          };
-        }
+      if (usageResponse.error) {
+        console.error('Usage fetch error:', usageResponse.error);
+        throw usageResponse.error;
       }
 
-      setSubscription(subscriptionData);
-      setUsage(usageData);
-      
-      console.log('Successfully loaded subscription data:', {
-        subscription: subscriptionData,
-        usage: usageData
+      setSubscription(subscriptionResponse.data);
+      setUsage(usageResponse.data);
+
+      console.log('Successfully loaded user data:', {
+        subscription: subscriptionResponse.data,
+        usage: usageResponse.data
       });
 
     } catch (err) {
-      console.error('Error fetching subscription data:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch subscription data');
+      console.error('Error in fetchSubscriptionData:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load user data');
       
-      // Set default values on error to prevent app from breaking
-      setSubscription({
-        id: 'error-default',
-        user_id: user.id,
-        stripe_customer_id: null,
-        stripe_subscription_id: null,
-        plan_type: 'free',
-        status: 'active',
-        current_period_start: null,
-        current_period_end: null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      });
-      
-      setUsage({
-        id: 'error-default',
-        user_id: user.id,
-        prompts_used: 0,
-        prompts_limit: 3,
-        reset_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      });
+      // Set minimal defaults to prevent app from breaking
+      if (user) {
+        setSubscription({
+          id: 'default',
+          user_id: user.id,
+          stripe_customer_id: null,
+          stripe_subscription_id: null,
+          plan_type: 'free',
+          status: 'active',
+          current_period_start: null,
+          current_period_end: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+        
+        setUsage({
+          id: 'default',
+          user_id: user.id,
+          prompts_used: 0,
+          prompts_limit: 3,
+          reset_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -252,12 +173,6 @@ export const useSubscription = () => {
       }
 
       console.log('Usage incremented successfully:', data);
-      
-      // Immediately fetch fresh data to update the UI
-      setTimeout(() => {
-        fetchSubscriptionData();
-      }, 500);
-      
       return data;
     } catch (err) {
       console.error('Error incrementing usage:', err);
