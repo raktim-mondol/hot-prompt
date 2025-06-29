@@ -180,7 +180,7 @@ function App() {
       setGeneratedPrompts(mockPrompts);
       console.log('Generated prompts:', mockPrompts);
 
-      // Increment usage count in the background without waiting
+      // Increment usage count in the background without blocking UI
       console.log('Incrementing usage...');
       incrementUsage().then((success) => {
         if (!success) {
@@ -188,10 +188,6 @@ function App() {
           // Don't show error to user as the prompt was generated successfully
         } else {
           console.log('Usage incremented successfully');
-          // Refresh subscription data in background after a delay
-          setTimeout(() => {
-            refetchSubscription();
-          }, 2000);
         }
       }).catch((err) => {
         console.error('Error incrementing usage:', err);

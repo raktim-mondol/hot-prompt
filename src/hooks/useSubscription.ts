@@ -172,17 +172,6 @@ export const useSubscription = () => {
     try {
       console.log('Incrementing usage for user:', user.id);
       
-      const { data, error } = await supabase.rpc('increment_prompt_usage', {
-        user_uuid: user.id
-      });
-
-      if (error) {
-        console.error('Error incrementing usage:', error);
-        return false;
-      }
-
-      console.log('Usage incremented successfully:', data);
-      
       // Update local state immediately to prevent flicker
       if (usage) {
         setUsage(prev => prev ? {
@@ -192,9 +181,36 @@ export const useSubscription = () => {
         } : prev);
       }
       
+      // Then update the database in the background
+      const { data, error } = await supabase.rpc('increment_prompt_usage', {
+        user_uuid: user.id
+      });
+
+      if (error) {
+        console.error('Error incrementing usage:', error);
+        // Revert the optimistic update if the database update failed
+        if (usage) {
+          setUsage(prev => prev ? {
+            ...prev,
+            prompts_used: prev.prompts_used - 1,
+            updated_at: new Date().toISOString()
+          } : prev);
+        }
+        return false;
+      }
+
+      console.log('Usage incremented successfully:', data);
       return data;
     } catch (err) {
       console.error('Error incrementing usage:', err);
+      // Revert the optimistic update if there was an error
+      if (usage) {
+        setUsage(prev => prev ? {
+          ...prev,
+          prompts_used: prev.prompts_used - 1,
+          updated_at: new Date().toISOString()
+        } : prev);
+      }
       return false;
     }
   };
