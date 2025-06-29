@@ -42,10 +42,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session);
+      
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+
+      // Handle OAuth callback
+      if (event === 'SIGNED_IN' && session) {
+        // Clear any hash from URL after successful OAuth sign in
+        if (window.location.hash) {
+          window.history.replaceState(null, '', window.location.pathname);
+        }
+      }
+
+      // Handle sign out
+      if (event === 'SIGNED_OUT') {
+        setSession(null);
+        setUser(null);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -71,7 +87,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'github',
       options: {
-        redirectTo: window.location.origin
+        redirectTo: `${window.location.origin}/`
       }
     });
     return { error };

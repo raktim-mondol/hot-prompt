@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Mail, Lock, User, Eye, EyeOff, Flame, Sparkles, Zap, Star, ArrowLeft, CheckCircle, Github } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -17,7 +17,18 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onBack }) => {
   const [message, setMessage] = useState<string | null>(null);
   const [showEmailSent, setShowEmailSent] = useState(false);
 
-  const { signIn, signUp, signInWithGitHub } = useAuth();
+  const { signIn, signUp, signInWithGitHub, user } = useAuth();
+
+  // Auto-close auth form when user signs in (handles OAuth callback)
+  useEffect(() => {
+    if (user && onBack) {
+      // Small delay to ensure smooth transition
+      const timer = setTimeout(() => {
+        onBack();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [user, onBack]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,12 +77,13 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onBack }) => {
       const { error } = await signInWithGitHub();
       if (error) {
         setError(error.message);
+        setGithubLoading(false);
       }
       // Note: For OAuth, the redirect happens automatically
       // The user will be redirected back to the app after authentication
+      // Don't set githubLoading to false here as the page will redirect
     } catch (err) {
       setError('Failed to sign in with GitHub');
-    } finally {
       setGithubLoading(false);
     }
   };

@@ -54,6 +54,14 @@ function App() {
     }
   }, [savedPrompts, user]);
 
+  // Handle OAuth callback - check for auth state changes
+  useEffect(() => {
+    // If user just signed in via OAuth and showAuthPage is true, close it
+    if (user && showAuthPage) {
+      setShowAuthPage(false);
+    }
+  }, [user, showAuthPage]);
+
   const handleGenerate = async () => {
     if (!input.trim()) {
       setError('Please enter a prompt description');
