@@ -31,6 +31,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Helper function to ensure user has required database records
+  const ensureUserRecords = async (userId: string) => {
+    try {
+      console.log('Ensuring user records exist for:', userId);
+      
+      // Call the database function to check and create records if needed
+      const { data, error } = await supabase.rpc('check_and_fix_user_records', {
+        user_uuid: userId
+      });
+
+      if (error) {
+        console.error('Error ensuring user records:', error);
+        
+        // Fallback: try to create records manually
+        const { error: fallbackError } = await supabase.rpc('ensure_user_records', {
+          user_uuid: userId
+        });
+        
+        if (fallbackError) {
+          console.error('Fallback user record creation failed:', fallbackError);
+        } else {
+          console.log('Successfully created user records via fallback');
+        }
+      } else {
+        console.log('User records verified/created:', data);
+      }
+    } catch (err) {
+      console.error('Error in ensureUserRecords:', err);
+    }
+  };
+
   // Helper function to clean up URL hash after auth
   const cleanupUrlHash = () => {
     if (window.location.hash && (
@@ -69,6 +100,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setSession(sessionFromUrl.session);
           setUser(sessionFromUrl.session.user);
           
+          // Ensure user has database records
+          await ensureUserRecords(sessionFromUrl.session.user.id);
+          
           // Clean up the URL hash immediately after successful session retrieval
           cleanupUrlHash();
         } else {
@@ -102,6 +136,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         // Handle successful authentication events
         if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session) {
+          // Ensure user has database records
+          await ensureUserRecords(session.user.id);
+          
           // Clean up URL hash after successful OAuth sign in or email confirmation
           cleanupUrlHash();
           
@@ -131,21 +168,35 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const signUp = async (email: string, password: string) => {
     console.log('Attempting to sign up with email:', email);
-    const result = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/`
+    
+    try {
+      const result = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`
+        }
+      });
+
+      // If sign up was successful but user needs email confirmation
+      if (result.data.user && !result.error) {
+        // Try to ensure user records are created even if trigger fails
+        if (result.data.user.id) {
+          setTimeout(async () => {
+            await ensureUserRecords(result.data.user!.id);
+          }, 1000); // Small delay to let the trigger run first
+        }
       }
-    });
-    return result;
+
+      return result;
+    } catch (error) {
+      console.error('Sign up error:', error);
+      return { data: null, error: error as AuthError };
+    }
   };
 
   const signIn = async (email: string, password: string, rememberDevice: boolean = true) => {
     console.log('Attempting to sign in with email:', email, 'Remember device:', rememberDevice);
-    
-    // Set session persistence based on rememberDevice option
-    const persistSession = rememberDevice ? 'local' : 'session';
     
     const { error } = await supabase.auth.signInWithPassword({
       email,
