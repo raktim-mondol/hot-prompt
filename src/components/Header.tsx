@@ -44,17 +44,21 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, user, o
                 <Flame className="w-4 h-4 inline mr-2" />
                 Generate
               </button>
-              <button
-                onClick={() => setActiveTab('saved')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  activeTab === 'saved'
-                    ? 'bg-white text-orange-600 shadow-lg'
-                    : 'text-gray-600 hover:text-orange-600 hover:bg-white/50'
-                }`}
-              >
-                <Bookmark className="w-4 h-4 inline mr-2" />
-                Saved
-              </button>
+              
+              {/* Only show Saved tab if user is authenticated */}
+              {user && (
+                <button
+                  onClick={() => setActiveTab('saved')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    activeTab === 'saved'
+                      ? 'bg-white text-orange-600 shadow-lg'
+                      : 'text-gray-600 hover:text-orange-600 hover:bg-white/50'
+                  }`}
+                >
+                  <Bookmark className="w-4 h-4 inline mr-2" />
+                  Saved
+                </button>
+              )}
             </nav>
 
             {/* User Menu */}
