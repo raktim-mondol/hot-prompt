@@ -7,7 +7,6 @@ import { GeneratedPrompts } from './components/GeneratedPrompts';
 import { SavedPrompts } from './components/SavedPrompts';
 import { LoadingSpinner } from './components/LoadingSpinner';
 import { ErrorMessage } from './components/ErrorMessage';
-import { AuthModal } from './components/AuthModal';
 
 export interface Prompt {
   id: string;
@@ -25,7 +24,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'generate' | 'saved'>('generate');
-  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showAuthPage, setShowAuthPage] = useState(false);
 
   // Load saved prompts from localStorage on mount and when user changes
   useEffect(() => {
@@ -52,7 +51,7 @@ function App() {
 
     // Check if user is authenticated
     if (!user) {
-      setShowAuthModal(true);
+      setShowAuthPage(true);
       return;
     }
 
@@ -95,7 +94,7 @@ function App() {
   const handleSavePrompt = (prompt: Prompt) => {
     // Check if user is authenticated
     if (!user) {
-      setShowAuthModal(true);
+      setShowAuthPage(true);
       return;
     }
 
@@ -114,7 +113,7 @@ function App() {
   const handleTabChange = (tab: 'generate' | 'saved') => {
     // Check if user is authenticated for saved tab
     if (tab === 'saved' && !user) {
-      setShowAuthModal(true);
+      setShowAuthPage(true);
       return;
     }
     setActiveTab(tab);
@@ -134,6 +133,11 @@ function App() {
     );
   }
 
+  // Show auth form if explicitly requested
+  if (showAuthPage) {
+    return <AuthForm onBack={() => setShowAuthPage(false)} />;
+  }
+
   // Show main app (no longer checking for user authentication)
   return (
     <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50">
@@ -144,7 +148,7 @@ function App() {
           activeTab={activeTab} 
           setActiveTab={handleTabChange}
           user={user}
-          onAuthClick={() => setShowAuthModal(true)}
+          onAuthClick={() => setShowAuthPage(true)}
         />
         
         <main className="container mx-auto px-4 py-8 max-w-6xl">
@@ -179,11 +183,6 @@ function App() {
           )}
         </main>
       </div>
-
-      {/* Auth Modal */}
-      {showAuthModal && (
-        <AuthModal onClose={() => setShowAuthModal(false)} />
-      )}
     </div>
   );
 }

@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
-import { Mail, Lock, User, Eye, EyeOff, Flame, Sparkles, Zap, Star } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, Flame, Sparkles, Zap, Star, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-export const AuthForm: React.FC = () => {
+interface AuthFormProps {
+  onBack?: () => void;
+}
+
+export const AuthForm: React.FC<AuthFormProps> = ({ onBack }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -24,6 +28,8 @@ export const AuthForm: React.FC = () => {
         const { error } = await signIn(email, password);
         if (error) {
           setError(error.message);
+        } else if (onBack) {
+          onBack(); // Go back to main app after successful login
         }
       } else {
         const { error } = await signUp(email, password);
@@ -58,6 +64,19 @@ export const AuthForm: React.FC = () => {
         <div className="absolute bottom-20 left-20 w-24 h-24 bg-amber-200/20 rounded-full blur-xl animate-pulse delay-500"></div>
         <div className="absolute bottom-40 right-10 w-16 h-16 bg-orange-300/20 rounded-full blur-xl animate-pulse delay-700"></div>
       </div>
+
+      {/* Back Button */}
+      {onBack && (
+        <div className="absolute top-6 left-6 z-20">
+          <button
+            onClick={onBack}
+            className="flex items-center space-x-2 text-gray-600 hover:text-orange-600 transition-colors bg-white/70 backdrop-blur-sm rounded-xl px-4 py-2 shadow-lg hover:shadow-xl"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span className="text-sm font-medium">Back to App</span>
+          </button>
+        </div>
+      )}
 
       <div className="relative z-10 flex min-h-screen">
         {/* Left Side - Hero Section */}
