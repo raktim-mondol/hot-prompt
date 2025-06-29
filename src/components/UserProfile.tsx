@@ -114,9 +114,9 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onUpgradeClick }) => {
         <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
-      {/* Dropdown Menu */}
+      {/* Dropdown Menu - Increased z-index to appear above all content */}
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden">
+        <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-200 z-[9999] overflow-hidden">
           {/* Header */}
           <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-red-50">
             <div className="flex items-center space-x-3">
