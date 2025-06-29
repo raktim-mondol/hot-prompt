@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Lock, User, Eye, EyeOff, Flame } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, Flame, Sparkles, Zap, Star } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export const AuthForm: React.FC = () => {
@@ -47,119 +47,213 @@ export const AuthForm: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 relative overflow-hidden">
+      {/* Background Pattern */}
       <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg fill=%22%23F97316%22 fill-opacity=%220.03%22%3E%3Ccircle cx=%2230%22 cy=%2230%22 r=%222%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-50"></div>
       
-      <div className="relative z-10 w-full max-w-md">
-        <div className="bg-white/70 backdrop-blur-xl rounded-2xl border border-orange-200/50 p-8 shadow-2xl">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-gradient-to-br from-orange-400 to-red-500 rounded-2xl flex items-center justify-center shadow-lg mx-auto mb-4">
-              <Flame className="w-8 h-8 text-white" />
-            </div>
-            <h1 className="text-2xl font-bold text-gray-800 mb-2">Hot Prompt</h1>
-            <p className="text-gray-600">
-              {isLogin ? 'Welcome back!' : 'Create your account'}
-            </p>
-          </div>
+      {/* Floating Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-20 h-20 bg-orange-200/20 rounded-full blur-xl animate-pulse"></div>
+        <div className="absolute top-40 right-20 w-32 h-32 bg-rose-200/20 rounded-full blur-xl animate-pulse delay-1000"></div>
+        <div className="absolute bottom-20 left-20 w-24 h-24 bg-amber-200/20 rounded-full blur-xl animate-pulse delay-500"></div>
+        <div className="absolute bottom-40 right-10 w-16 h-16 bg-orange-300/20 rounded-full blur-xl animate-pulse delay-700"></div>
+      </div>
 
-          {/* Error/Success Messages */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
-              <p className="text-red-700 text-sm">{error}</p>
-            </div>
-          )}
-
-          {message && (
-            <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6">
-              <p className="text-green-700 text-sm">{message}</p>
-            </div>
-          )}
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Email Field */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="w-full pl-10 pr-4 py-3 bg-white/80 border border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400/50 focus:border-transparent"
-                  placeholder="Enter your email"
-                />
+      <div className="relative z-10 flex min-h-screen">
+        {/* Left Side - Hero Section */}
+        <div className="hidden lg:flex lg:w-1/2 flex-col justify-center px-12 xl:px-16">
+          <div className="max-w-lg">
+            <div className="flex items-center space-x-3 mb-8">
+              <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-red-500 rounded-xl flex items-center justify-center shadow-lg">
+                <Flame className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-800">Hot Prompt</h1>
+                <p className="text-gray-600">AI Prompt Generator</p>
               </div>
             </div>
 
-            {/* Password Field */}
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  className="w-full pl-10 pr-12 py-3 bg-white/80 border border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400/50 focus:border-transparent"
-                  placeholder="Enter your password"
-                />
+            <h2 className="text-4xl font-bold text-gray-800 mb-6 leading-tight">
+              Create Perfect Prompts for Any AI Task
+            </h2>
+            
+            <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+              Transform your ideas into powerful AI prompts. Generate, save, and organize 
+              your prompt collection with our intelligent prompt generator.
+            </p>
+
+            {/* Feature List */}
+            <div className="space-y-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                  <Sparkles className="w-4 h-4 text-orange-600" />
+                </div>
+                <span className="text-gray-700">AI-powered prompt generation</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                  <Star className="w-4 h-4 text-orange-600" />
+                </div>
+                <span className="text-gray-700">Save and organize favorites</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                  <Zap className="w-4 h-4 text-orange-600" />
+                </div>
+                <span className="text-gray-700">Instant copy-to-clipboard</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Side - Auth Form */}
+        <div className="w-full lg:w-1/2 flex items-center justify-center p-4 lg:p-8">
+          <div className="w-full max-w-md">
+            {/* Mobile Header */}
+            <div className="lg:hidden text-center mb-8">
+              <div className="w-16 h-16 bg-gradient-to-br from-orange-400 to-red-500 rounded-2xl flex items-center justify-center shadow-lg mx-auto mb-4">
+                <Flame className="w-8 h-8 text-white" />
+              </div>
+              <h1 className="text-2xl font-bold text-gray-800 mb-2">Hot Prompt</h1>
+              <p className="text-gray-600">Create perfect AI prompts</p>
+            </div>
+
+            <div className="bg-white/70 backdrop-blur-xl rounded-2xl border border-orange-200/50 p-8 shadow-2xl">
+              {/* Form Header */}
+              <div className="text-center mb-8">
+                <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                  {isLogin ? 'Welcome Back!' : 'Join Hot Prompt'}
+                </h2>
+                <p className="text-gray-600">
+                  {isLogin 
+                    ? 'Sign in to access your saved prompts' 
+                    : 'Create an account to start generating prompts'
+                  }
+                </p>
+              </div>
+
+              {/* Error/Success Messages */}
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+                  <p className="text-red-700 text-sm flex items-center">
+                    <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                    {error}
+                  </p>
+                </div>
+              )}
+
+              {message && (
+                <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6">
+                  <p className="text-green-700 text-sm flex items-center">
+                    <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                    {message}
+                  </p>
+                </div>
+              )}
+
+              {/* Form */}
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Email Field */}
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                    Email Address
+                  </label>
+                  <div className="relative group">
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
+                    <input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      className="w-full pl-10 pr-4 py-3 bg-white/80 border border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400/50 focus:border-transparent transition-all duration-200 hover:bg-white/90"
+                      placeholder="Enter your email"
+                    />
+                  </div>
+                </div>
+
+                {/* Password Field */}
+                <div>
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                    Password
+                  </label>
+                  <div className="relative group">
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
+                    <input
+                      id="password"
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      minLength={6}
+                      className="w-full pl-10 pr-12 py-3 bg-white/80 border border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400/50 focus:border-transparent transition-all duration-200 hover:bg-white/90"
+                      placeholder="Enter your password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-orange-600 transition-colors"
+                    >
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+                  {!isLogin && (
+                    <p className="text-xs text-gray-500 mt-2 flex items-center">
+                      <span className="w-1 h-1 bg-gray-400 rounded-full mr-2"></span>
+                      Password must be at least 6 characters long
+                    </p>
+                  )}
+                </div>
+
+                {/* Submit Button */}
                 <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-orange-400 to-red-500 hover:from-orange-500 hover:to-red-600 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white py-3 rounded-xl font-medium transition-all duration-200 transform hover:scale-105 disabled:hover:scale-100 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl"
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {loading ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      <span>{isLogin ? 'Signing In...' : 'Creating Account...'}</span>
+                    </>
+                  ) : (
+                    <>
+                      {isLogin ? <User className="w-5 h-5" /> : <Flame className="w-5 h-5" />}
+                      <span>{isLogin ? 'Sign In' : 'Create Account'}</span>
+                    </>
+                  )}
+                </button>
+              </form>
+
+              {/* Toggle Mode */}
+              <div className="mt-8 text-center">
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-orange-200"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-4 bg-white/70 text-gray-500">or</span>
+                  </div>
+                </div>
+                
+                <p className="text-gray-600 text-sm mt-4">
+                  {isLogin ? "Don't have an account?" : 'Already have an account?'}
+                </p>
+                <button
+                  onClick={toggleMode}
+                  className="mt-2 text-orange-600 hover:text-orange-700 font-medium transition-colors hover:underline"
+                >
+                  {isLogin ? 'Create a new account' : 'Sign in to existing account'}
                 </button>
               </div>
-              {!isLogin && (
-                <p className="text-xs text-gray-500 mt-1">
-                  Password must be at least 6 characters long
-                </p>
-              )}
             </div>
 
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-gradient-to-r from-orange-400 to-red-500 hover:from-orange-500 hover:to-red-600 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white py-3 rounded-xl font-medium transition-all duration-200 transform hover:scale-105 disabled:hover:scale-100 flex items-center justify-center space-x-2 shadow-lg"
-            >
-              {loading ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  <span>{isLogin ? 'Signing In...' : 'Creating Account...'}</span>
-                </>
-              ) : (
-                <>
-                  {isLogin ? <User className="w-5 h-5" /> : <Flame className="w-5 h-5" />}
-                  <span>{isLogin ? 'Sign In' : 'Create Account'}</span>
-                </>
-              )}
-            </button>
-          </form>
-
-          {/* Toggle Mode */}
-          <div className="mt-6 text-center">
-            <p className="text-gray-600 text-sm">
-              {isLogin ? "Don't have an account?" : 'Already have an account?'}
-              <button
-                onClick={toggleMode}
-                className="ml-2 text-orange-600 hover:text-orange-700 font-medium transition-colors"
-              >
-                {isLogin ? 'Sign Up' : 'Sign In'}
-              </button>
-            </p>
+            {/* Footer */}
+            <div className="text-center mt-6">
+              <p className="text-xs text-gray-500">
+                By continuing, you agree to our terms of service and privacy policy
+              </p>
+            </div>
           </div>
         </div>
       </div>
