@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, Zap, Crown, Gift, Sparkles, Loader2 } from 'lucide-react';
+import { Check, Zap, Crown, Gift, Loader2 } from 'lucide-react';
 import { stripeProducts } from '../stripe-config';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
@@ -58,7 +58,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
     {
       id: 'free',
       name: 'Free',
-      price: 'AUD $0',
+      price: '$0',
       period: 'forever',
       prompts: '3 prompts',
       resetPeriod: 'per month',
@@ -69,8 +69,6 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
         'Email support'
       ],
       icon: Gift,
-      color: 'from-gray-400 to-gray-600',
-      borderColor: 'border-gray-200',
       current: currentPlan === 'free',
       popular: false,
       priceId: null,
@@ -78,7 +76,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
     {
       id: 'monthly',
       name: 'Pro Monthly',
-      price: 'AUD $4.95',
+      price: '$4.95',
       period: 'per month',
       prompts: '100 prompts',
       resetPeriod: 'per month',
@@ -91,8 +89,6 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
         'Priority email support'
       ],
       icon: Zap,
-      color: 'from-orange-400 to-red-500',
-      borderColor: 'border-orange-300',
       current: currentPlan === 'monthly',
       popular: true,
       priceId: stripeProducts.find(p => p.name === 'Hot Prompt Month')?.priceId,
@@ -100,7 +96,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
     {
       id: 'yearly',
       name: 'Pro Yearly',
-      price: 'AUD $49.50',
+      price: '$49.50',
       period: 'per year',
       prompts: '1,500 prompts',
       resetPeriod: 'per year',
@@ -115,8 +111,6 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
         'Early access to new features'
       ],
       icon: Crown,
-      color: 'from-purple-400 to-pink-500',
-      borderColor: 'border-purple-300',
       current: currentPlan === 'yearly',
       popular: false,
       priceId: stripeProducts.find(p => p.name === 'Hot Prompt Year')?.priceId,
@@ -126,10 +120,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
   return (
     <div className="bg-white/70 backdrop-blur-xl rounded-2xl border border-orange-200/50 p-8 shadow-lg">
       <div className="text-center mb-8">
-        <div className="flex items-center justify-center space-x-2 mb-4">
-          <Sparkles className="w-6 h-6 text-orange-500" />
-          <h2 className="text-2xl font-bold text-gray-800">Choose Your Plan</h2>
-        </div>
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">Choose Your Plan</h2>
         <p className="text-gray-600 max-w-2xl mx-auto">
           Start with our free plan and upgrade when you need more prompts. 
           All plans include our powerful AI prompt generation and organization tools.
@@ -153,18 +144,18 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
           return (
             <div
               key={plan.id}
-              className={`relative bg-white/80 backdrop-blur-sm border-2 rounded-2xl p-6 transition-all duration-200 hover:shadow-xl ${
+              className={`relative bg-white rounded-xl border-2 p-6 transition-all duration-200 hover:shadow-lg ${
                 plan.popular
-                  ? 'border-orange-300 shadow-lg scale-105 ring-2 ring-orange-200/50'
+                  ? 'border-orange-300 shadow-md'
                   : isCurrentPlan
-                  ? 'border-green-300 shadow-md'
-                  : `${plan.borderColor} hover:border-orange-200`
+                  ? 'border-green-300 shadow-sm'
+                  : 'border-gray-200 hover:border-gray-300'
               }`}
             >
               {/* Popular Badge */}
               {plan.popular && (
                 <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                  <div className="bg-gradient-to-r from-orange-400 to-red-500 text-white px-4 py-1 rounded-full text-xs font-medium shadow-lg">
+                  <div className="bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-medium">
                     Most Popular
                   </div>
                 </div>
@@ -173,32 +164,32 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
               {/* Current Plan Badge */}
               {isCurrentPlan && (
                 <div className="absolute -top-3 right-4">
-                  <div className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-medium flex items-center space-x-1 shadow-lg">
+                  <div className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-medium flex items-center space-x-1">
                     <Check className="w-3 h-3" />
                     <span>Current</span>
                   </div>
                 </div>
               )}
 
-              {/* Plan Icon */}
-              <div className={`w-12 h-12 bg-gradient-to-br ${plan.color} rounded-xl flex items-center justify-center mb-4 shadow-lg`}>
-                <Icon className="w-6 h-6 text-white" />
-              </div>
-
-              {/* Plan Details */}
-              <div className="mb-6">
+              {/* Plan Header */}
+              <div className="text-center mb-6">
+                <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                  <Icon className="w-6 h-6 text-gray-600" />
+                </div>
                 <h3 className="text-xl font-bold text-gray-800 mb-2">{plan.name}</h3>
-                <div className="flex items-baseline space-x-2 mb-1">
+                <div className="flex items-baseline justify-center space-x-1 mb-1">
                   <span className="text-3xl font-bold text-gray-800">{plan.price}</span>
                   <span className="text-gray-600 text-sm">{plan.period}</span>
                 </div>
                 {plan.savings && (
-                  <div className="text-green-600 text-sm font-medium mb-2">{plan.savings}</div>
+                  <div className="text-green-600 text-sm font-medium">{plan.savings}</div>
                 )}
-                <div className="text-center bg-orange-50 rounded-lg p-3 mb-4">
-                  <div className="text-lg font-semibold text-gray-800">{plan.prompts}</div>
-                  <div className="text-sm text-gray-600">{plan.resetPeriod}</div>
-                </div>
+              </div>
+
+              {/* Prompts Info */}
+              <div className="text-center bg-gray-50 rounded-lg p-3 mb-6">
+                <div className="text-lg font-semibold text-gray-800">{plan.prompts}</div>
+                <div className="text-sm text-gray-600">{plan.resetPeriod}</div>
               </div>
 
               {/* Features */}
@@ -215,13 +206,13 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
               <button
                 onClick={() => canUpgrade && plan.priceId && handleUpgrade(plan.priceId, plan.id)}
                 disabled={!canUpgrade || isLoadingPlan || !plan.priceId}
-                className={`w-full py-3 rounded-xl font-medium transition-all duration-200 transform hover:scale-105 disabled:hover:scale-100 flex items-center justify-center space-x-2 shadow-lg ${
+                className={`w-full py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center space-x-2 ${
                   isCurrentPlan
                     ? 'bg-green-100 text-green-700 cursor-default'
                     : plan.id === 'free'
                     ? 'bg-gray-100 text-gray-500 cursor-default'
                     : canUpgrade && plan.priceId
-                    ? 'bg-gradient-to-r from-orange-400 to-red-500 hover:from-orange-500 hover:to-red-600 text-white hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed'
+                    ? 'bg-orange-500 hover:bg-orange-600 text-white hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed'
                     : 'bg-gray-100 text-gray-500 cursor-default'
                 }`}
               >
