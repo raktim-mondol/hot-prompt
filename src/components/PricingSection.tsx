@@ -123,6 +123,32 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
     },
   ];
 
+  const getButtonText = (plan: any) => {
+    const isCurrentPlan = plan.current;
+    const canUpgrade = plan.id !== 'free' && !isCurrentPlan && plan.priceId;
+    
+    if (isCurrentPlan) {
+      return 'Current Plan';
+    }
+    
+    if (plan.id === 'free') {
+      return 'Free Forever';
+    }
+    
+    if (canUpgrade) {
+      // If user has yearly plan and this is monthly, show "Subscribe"
+      // If user has monthly plan and this is yearly, show "Upgrade Now"
+      // If user has free plan, show "Upgrade Now"
+      if (currentPlan === 'yearly' && plan.id === 'monthly') {
+        return 'Subscribe';
+      } else {
+        return 'Upgrade Now';
+      }
+    }
+    
+    return 'Unavailable';
+  };
+
   return (
     <div className="bg-white/70 backdrop-blur-xl rounded-2xl border border-orange-200/50 p-8 shadow-lg">
       <div className="text-center mb-8">
@@ -149,6 +175,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
           const isCurrentPlan = plan.current;
           const canUpgrade = plan.id !== 'free' && !isCurrentPlan && plan.priceId;
           const isLoadingPlan = loading === plan.id;
+          const buttonText = getButtonText(plan);
 
           return (
             <div
@@ -240,7 +267,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
                 ) : (
                   <>
                     <Zap className="w-4 h-4" />
-                    <span>Upgrade Now</span>
+                    <span>{buttonText}</span>
                   </>
                 )}
               </button>
