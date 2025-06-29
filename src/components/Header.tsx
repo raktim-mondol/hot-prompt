@@ -31,21 +31,21 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, user, o
           </div>
 
           <div className="flex items-center space-x-4">
-            {/* Navigation */}
-            <nav className="flex space-x-1 bg-orange-100/50 rounded-xl p-1">
-              <button
-                onClick={() => setActiveTab('generate')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  activeTab === 'generate'
-                    ? 'bg-white text-orange-600 shadow-lg'
-                    : 'text-gray-600 hover:text-orange-600 hover:bg-white/50'
-                }`}
-              >
-                <Flame className="w-4 h-4 inline mr-2" />
-                Generate
-              </button>
-              
-              {user && (
+            {/* Navigation - Only show when user is authenticated */}
+            {user && (
+              <nav className="flex space-x-1 bg-orange-100/50 rounded-xl p-1">
+                <button
+                  onClick={() => setActiveTab('generate')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    activeTab === 'generate'
+                      ? 'bg-white text-orange-600 shadow-lg'
+                      : 'text-gray-600 hover:text-orange-600 hover:bg-white/50'
+                  }`}
+                >
+                  <Flame className="w-4 h-4 inline mr-2" />
+                  Generate
+                </button>
+                
                 <button
                   onClick={() => setActiveTab('saved')}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
@@ -57,20 +57,20 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, user, o
                   <Bookmark className="w-4 h-4 inline mr-2" />
                   Saved
                 </button>
-              )}
 
-              <button
-                onClick={() => setActiveTab('pricing')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  activeTab === 'pricing'
-                    ? 'bg-white text-orange-600 shadow-lg'
-                    : 'text-gray-600 hover:text-orange-600 hover:bg-white/50'
-                }`}
-              >
-                <CreditCard className="w-4 h-4 inline mr-2" />
-                Pricing
-              </button>
-            </nav>
+                <button
+                  onClick={() => setActiveTab('pricing')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    activeTab === 'pricing'
+                      ? 'bg-white text-orange-600 shadow-lg'
+                      : 'text-gray-600 hover:text-orange-600 hover:bg-white/50'
+                  }`}
+                >
+                  <CreditCard className="w-4 h-4 inline mr-2" />
+                  Pricing
+                </button>
+              </nav>
+            )}
 
             {/* User Menu */}
             <div className={`flex items-center space-x-3 ${user ? 'pl-4 border-l border-orange-200' : ''}`}>

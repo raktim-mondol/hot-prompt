@@ -176,8 +176,8 @@ function App() {
   };
 
   const handleTabChange = (tab: 'generate' | 'saved' | 'pricing') => {
-    // Check if user is authenticated for saved tab
-    if (tab === 'saved' && !user) {
+    // Check if user is authenticated for saved and pricing tabs
+    if ((tab === 'saved' || tab === 'pricing') && !user) {
       setShowAuthPage(true);
       return;
     }
