@@ -31,11 +31,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Helper function to clean up URL hash
+  const cleanupUrlHash = () => {
+    if (window.location.hash && (
+      window.location.hash.includes('access_token') || 
+      window.location.hash.includes('refresh_token') ||
+      window.location.hash.includes('type=signup') ||
+      window.location.hash.includes('type=recovery') ||
+      window.location.hash.includes('type=magiclink') ||
+      window.location.hash.includes('provider_token')
+    )) {
+      // Clean up the URL hash while preserving query parameters
+      const cleanUrl = window.location.origin + window.location.pathname + window.location.search;
+      window.history.replaceState(null, '', cleanUrl);
+      console.log('Cleaned up OAuth URL hash');
+    }
+  };
+
   useEffect(() => {
     let mounted = true;
 
     const initializeAuth = async () => {
       try {
+        console.log('Initializing auth...');
+        
         // Check if there's a session in the URL (from OAuth callback or email confirmation)
         const { data, error } = await supabase.auth.getSession();
         
@@ -43,6 +62,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           if (error) {
             console.error('Error getting session:', error);
           } else {
+            console.log('Session data:', data.session ? 'Session found' : 'No session');
             setSession(data.session);
             setUser(data.session?.user ?? null);
           }
@@ -50,10 +70,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
 
         // Clean up URL hash if it contains auth tokens
-        if (window.location.hash && window.location.hash.includes('access_token')) {
-          // Use replaceState to remove the hash without triggering a page reload
-          window.history.replaceState(null, '', window.location.pathname + window.location.search);
-        }
+        cleanupUrlHash();
       } catch (error) {
         console.error('Error initializing auth:', error);
         if (mounted) {
@@ -68,35 +85,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session);
+      console.log('Auth state changed:', event, session?.user?.email || 'No user');
       
       if (mounted) {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
 
-        // Handle successful sign in events
-        if (event === 'SIGNED_IN' && session) {
+        // Handle successful authentication events
+        if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session) {
           // Clean up URL hash after successful OAuth sign in or email confirmation
-          if (window.location.hash && (
-            window.location.hash.includes('access_token') || 
-            window.location.hash.includes('type=signup') ||
-            window.location.hash.includes('type=recovery')
-          )) {
-            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+          cleanupUrlHash();
+          
+          // Log successful authentication
+          const provider = session.user?.app_metadata?.provider;
+          if (provider === 'github') {
+            console.log('Successfully signed in with GitHub');
+          } else if (provider === 'email') {
+            console.log('Successfully signed in with email');
           }
         }
 
         // Handle sign out
         if (event === 'SIGNED_OUT') {
+          console.log('User signed out');
           setSession(null);
           setUser(null);
-        }
-
-        // Handle token refresh
-        if (event === 'TOKEN_REFRESHED' && session) {
-          setSession(session);
-          setUser(session.user);
         }
       }
     });
@@ -108,6 +122,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const signUp = async (email: string, password: string) => {
+    console.log('Attempting to sign up with email:', email);
     const result = await supabase.auth.signUp({
       email,
       password,
@@ -116,6 +131,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const signIn = async (email: string, password: string) => {
+    console.log('Attempting to sign in with email:', email);
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -124,17 +140,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const signInWithGitHub = async () => {
+    console.log('Attempting to sign in with GitHub...');
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'github',
       options: {
-        redirectTo: `${window.location.origin}/`
+        redirectTo: `${window.location.origin}/`,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        }
       }
     });
+    
+    if (error) {
+      console.error('GitHub OAuth error:', error);
+    } else {
+      console.log('GitHub OAuth initiated successfully');
+    }
+    
     return { error };
   };
 
   const signOut = async () => {
+    console.log('Signing out...');
     const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Sign out error:', error);
+    }
     return { error };
   };
 
