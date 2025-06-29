@@ -176,9 +176,6 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onUpgradeClick }) => {
             <div className="font-medium text-gray-800 truncate">
               {user.email}
             </div>
-            <div className="text-sm text-gray-600">
-              Account Settings
-            </div>
           </div>
         </div>
       </div>
@@ -265,7 +262,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onUpgradeClick }) => {
             className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-3 transition-colors"
           >
             <Settings className="w-4 h-4" />
-            <span>Account Settings</span>
+            <span>Account</span>
           </button>
           
           <button
