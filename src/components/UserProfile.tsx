@@ -109,50 +109,21 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onUpgradeClick }) => {
   };
 
   const getSubscriptionEndDate = () => {
-    // For paid plans, check if we have subscription end date from Stripe
-    if (subscription?.plan_type !== 'free' && subscription?.current_period_end) {
-      // Handle both timestamp formats (seconds or milliseconds)
-      const timestamp = typeof subscription.current_period_end === 'string' 
-        ? parseInt(subscription.current_period_end) 
-        : subscription.current_period_end;
-      
-      // If timestamp is in seconds (typical for Stripe), convert to milliseconds
-      const date = new Date(timestamp > 9999999999 ? timestamp : timestamp * 1000);
-      
-      return date.toLocaleDateString('en-AU', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-    }
+    if (!subscription?.current_period_end) return null;
     
-    // For one-time purchases (monthly/yearly without recurring subscription)
-    // Calculate end date based on when they purchased and plan type
-    if (subscription?.plan_type === 'monthly' && subscription?.updated_at) {
-      const purchaseDate = new Date(subscription.updated_at);
-      const endDate = new Date(purchaseDate);
-      endDate.setMonth(endDate.getMonth() + 1); // Add 1 month
-      
-      return endDate.toLocaleDateString('en-AU', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-    }
+    // Handle both timestamp formats (seconds or milliseconds)
+    const timestamp = typeof subscription.current_period_end === 'string' 
+      ? parseInt(subscription.current_period_end) 
+      : subscription.current_period_end;
     
-    if (subscription?.plan_type === 'yearly' && subscription?.updated_at) {
-      const purchaseDate = new Date(subscription.updated_at);
-      const endDate = new Date(purchaseDate);
-      endDate.setFullYear(endDate.getFullYear() + 1); // Add 1 year
-      
-      return endDate.toLocaleDateString('en-AU', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-    }
+    // If timestamp is in seconds (typical for Stripe), convert to milliseconds
+    const date = new Date(timestamp > 9999999999 ? timestamp : timestamp * 1000);
     
-    return null;
+    return date.toLocaleDateString('en-AU', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
   };
 
   const getUsageResetDate = () => {
@@ -176,24 +147,6 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onUpgradeClick }) => {
     if (percentage >= 90) return 'bg-red-500';
     if (percentage >= 70) return 'bg-orange-500';
     return 'bg-green-500';
-  };
-
-  const getSubscriptionStatusText = () => {
-    if (subscription?.plan_type === 'free') {
-      return null; // Don't show end date for free plan
-    }
-    
-    const endDate = getSubscriptionEndDate();
-    if (!endDate) {
-      return 'Active subscription';
-    }
-    
-    // Check if it's a recurring subscription or one-time purchase
-    if (subscription?.current_period_end) {
-      return `Renews on ${endDate}`;
-    } else {
-      return `Expires on ${endDate}`;
-    }
   };
 
   const PlanIcon = getPlanIcon();
@@ -239,11 +192,16 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onUpgradeClick }) => {
             </div>
           </div>
 
-          {/* Subscription Status and End Date */}
+          {/* Subscription End Date */}
           {subscription?.plan_type !== 'free' && (
             <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
               <Calendar className="w-4 h-4" />
-              <span>{getSubscriptionStatusText()}</span>
+              <span>
+                {subscription?.current_period_end 
+                  ? `Renews on ${getSubscriptionEndDate()}`
+                  : 'Active subscription'
+                }
+              </span>
             </div>
           )}
 
