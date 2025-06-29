@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from './context/AuthContext';
+import { useSubscription } from './hooks/useSubscription';
 import { AuthForm } from './components/AuthForm';
 import { Header } from './components/Header';
 import { PromptInput } from './components/PromptInput';
@@ -7,6 +8,8 @@ import { GeneratedPrompts } from './components/GeneratedPrompts';
 import { SavedPrompts } from './components/SavedPrompts';
 import { LoadingSpinner } from './components/LoadingSpinner';
 import { ErrorMessage } from './components/ErrorMessage';
+import { UsageIndicator } from './components/UsageIndicator';
+import { PricingModal } from './components/PricingModal';
 
 export interface Prompt {
   id: string;
@@ -18,6 +21,14 @@ export interface Prompt {
 
 function App() {
   const { user, loading: authLoading } = useAuth();
+  const { 
+    subscription, 
+    canGeneratePrompt, 
+    incrementUsage, 
+    getRemainingPrompts,
+    isSubscriptionActive 
+  } = useSubscription();
+  
   const [input, setInput] = useState('');
   const [generatedPrompts, setGeneratedPrompts] = useState<Prompt[]>([]);
   const [savedPrompts, setSavedPrompts] = useState<Prompt[]>([]);
@@ -25,6 +36,7 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'generate' | 'saved'>('generate');
   const [showAuthPage, setShowAuthPage] = useState(false);
+  const [showPricingModal, setShowPricingModal] = useState(false);
 
   // Load saved prompts from localStorage on mount and when user changes
   useEffect(() => {
@@ -74,6 +86,22 @@ function App() {
       return;
     }
 
+    // Check if user can generate prompts (usage limits, subscription status)
+    const canGenerate = await canGeneratePrompt();
+    if (!canGenerate) {
+      const remainingPrompts = getRemainingPrompts();
+      if (remainingPrompts === 0) {
+        setError('You have reached your prompt limit. Please upgrade your plan to continue.');
+        setShowPricingModal(true);
+      } else if (!isSubscriptionActive()) {
+        setError('Your subscription is not active. Please check your payment method or upgrade your plan.');
+        setShowPricingModal(true);
+      } else {
+        setError('Unable to generate prompts at this time. Please try again later.');
+      }
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
@@ -84,6 +112,12 @@ function App() {
       // Generate mock prompts based on input
       const mockPrompts = generateMockPrompts(input);
       setGeneratedPrompts(mockPrompts);
+
+      // Increment usage count
+      const success = await incrementUsage();
+      if (!success) {
+        console.warn('Failed to increment usage count');
+      }
     } catch (err) {
       setError('Failed to generate prompts. Please try again.');
     } finally {
@@ -157,7 +191,7 @@ function App() {
     return <AuthForm onBack={() => setShowAuthPage(false)} />;
   }
 
-  // Show main app (no longer checking for user authentication)
+  // Show main app
   return (
     <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50">
       <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg fill=%22%23F97316%22 fill-opacity=%220.03%22%3E%3Ccircle cx=%2230%22 cy=%2230%22 r=%222%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-50"></div>
@@ -173,6 +207,13 @@ function App() {
         <main className="container mx-auto px-4 py-8 max-w-6xl">
           {error && (
             <ErrorMessage message={error} onClear={clearError} />
+          )}
+
+          {/* Usage Indicator - Show when user is logged in */}
+          {user && (
+            <div className="mb-6">
+              <UsageIndicator onUpgradeClick={() => setShowPricingModal(true)} />
+            </div>
           )}
 
           {activeTab === 'generate' ? (
@@ -202,6 +243,13 @@ function App() {
           )}
         </main>
       </div>
+
+      {/* Pricing Modal */}
+      <PricingModal
+        isOpen={showPricingModal}
+        onClose={() => setShowPricingModal(false)}
+        currentPlan={subscription?.plan_type}
+      />
     </div>
   );
 }
