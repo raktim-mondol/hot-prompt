@@ -1,5 +1,5 @@
 import React from 'react';
-import { Flame, Bookmark, LogOut, User, UserPlus, DollarSign } from 'lucide-react';
+import { Flame, Bookmark, LogOut, User, UserPlus, CreditCard } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 interface HeaderProps {
@@ -67,7 +67,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, user, o
                     : 'text-gray-600 hover:text-orange-600 hover:bg-white/50'
                 }`}
               >
-                <DollarSign className="w-4 h-4 inline mr-2" />
+                <CreditCard className="w-4 h-4 inline mr-2" />
                 Pricing
               </button>
             </nav>

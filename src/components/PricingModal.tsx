@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { X, Check, Zap, Crown, Gift, CreditCard, Loader2 } from 'lucide-react';
-import { stripe } from '../lib/stripe';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { stripeProducts } from '../stripe-config';
 
 interface PricingModalProps {
   isOpen: boolean;
@@ -19,13 +19,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // These would be your actual Stripe price IDs
-  const PRICE_IDS = {
-    monthly: 'price_monthly_placeholder', // Replace with actual Stripe price ID
-    yearly: 'price_yearly_placeholder',   // Replace with actual Stripe price ID
-  };
-
-  const handleSubscribe = async (planType: 'monthly' | 'yearly') => {
+  const handleSubscribe = async (priceId: string, planType: string) => {
     if (!user) {
       setError('Please sign in to subscribe');
       return;
@@ -35,18 +29,14 @@ export const PricingModal: React.FC<PricingModalProps> = ({
     setError(null);
 
     try {
-      const stripeInstance = await stripe;
-      if (!stripeInstance) {
-        throw new Error('Stripe failed to load');
-      }
-
-      // Call your edge function to create checkout session
       const { data, error: functionError } = await supabase.functions.invoke(
-        'create-checkout-session',
+        'stripe-checkout',
         {
           body: {
-            priceId: PRICE_IDS[planType],
-            planType: planType,
+            price_id: priceId,
+            success_url: `${window.location.origin}/success`,
+            cancel_url: `${window.location.origin}/pricing`,
+            mode: 'payment',
           },
         }
       );
@@ -55,18 +45,12 @@ export const PricingModal: React.FC<PricingModalProps> = ({
         throw functionError;
       }
 
-      if (!data.sessionId) {
-        throw new Error('No session ID returned');
+      if (!data.url) {
+        throw new Error('No checkout URL returned');
       }
 
       // Redirect to Stripe Checkout
-      const { error: stripeError } = await stripeInstance.redirectToCheckout({
-        sessionId: data.sessionId,
-      });
-
-      if (stripeError) {
-        throw stripeError;
-      }
+      window.location.href = data.url;
     } catch (err) {
       console.error('Subscription error:', err);
       setError(err instanceof Error ? err.message : 'Failed to start subscription');
@@ -96,6 +80,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
       buttonColor: 'bg-gray-500 hover:bg-gray-600',
       current: currentPlan === 'free',
       popular: false,
+      priceId: null,
     },
     {
       id: 'monthly',
@@ -117,6 +102,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
       buttonColor: 'bg-gradient-to-r from-orange-400 to-red-500 hover:from-orange-500 hover:to-red-600',
       current: currentPlan === 'monthly',
       popular: true,
+      priceId: stripeProducts.find(p => p.name === 'Hot Prompt Month')?.priceId,
     },
     {
       id: 'yearly',
@@ -140,6 +126,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
       buttonColor: 'bg-gradient-to-r from-purple-400 to-pink-500 hover:from-purple-500 hover:to-pink-600',
       current: currentPlan === 'yearly',
       popular: false,
+      priceId: stripeProducts.find(p => p.name === 'Hot Prompt Year')?.priceId,
     },
   ];
 
@@ -173,7 +160,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
             {plans.map((plan) => {
               const Icon = plan.icon;
               const isCurrentPlan = plan.current;
-              const canSubscribe = plan.id !== 'free' && !isCurrentPlan;
+              const canSubscribe = plan.id !== 'free' && !isCurrentPlan && plan.priceId;
               const isLoadingPlan = loading === plan.id;
 
               return (
@@ -239,12 +226,12 @@ export const PricingModal: React.FC<PricingModalProps> = ({
 
                   {/* Action Button */}
                   <button
-                    onClick={() => canSubscribe && handleSubscribe(plan.id as 'monthly' | 'yearly')}
-                    disabled={!canSubscribe || isLoadingPlan}
+                    onClick={() => canSubscribe && plan.priceId && handleSubscribe(plan.priceId, plan.id)}
+                    disabled={!canSubscribe || isLoadingPlan || !plan.priceId}
                     className={`w-full py-3 rounded-xl font-medium transition-all duration-200 transform hover:scale-105 disabled:hover:scale-100 flex items-center justify-center space-x-2 ${
                       isCurrentPlan
                         ? 'bg-green-100 text-green-700 cursor-default'
-                        : canSubscribe
+                        : canSubscribe && plan.priceId
                         ? `${plan.buttonColor} text-white shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed`
                         : 'bg-gray-100 text-gray-500 cursor-default'
                     }`}
@@ -259,7 +246,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                         <Check className="w-4 h-4" />
                         <span>Current Plan</span>
                       </>
-                    ) : canSubscribe ? (
+                    ) : canSubscribe && plan.priceId ? (
                       <>
                         <CreditCard className="w-4 h-4" />
                         <span>Subscribe Now</span>

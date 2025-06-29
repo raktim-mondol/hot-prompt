@@ -1,5 +1,6 @@
 import React from 'react';
 import { Check, Zap, Crown, Gift, Sparkles } from 'lucide-react';
+import { stripeProducts } from '../stripe-config';
 
 interface PricingSectionProps {
   onUpgradeClick: () => void;
@@ -37,7 +38,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
       period: 'per month',
       prompts: '100 prompts',
       resetPeriod: 'per month',
-      features: [
+      features: stripeProducts.find(p => p.name === 'Hot Prompt Month')?.features || [
         '100 AI-generated prompts per month',
         'Advanced prompt templates',
         'Priority generation',
@@ -59,7 +60,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
       prompts: '1,500 prompts',
       resetPeriod: 'per year',
       savings: 'Save 16%',
-      features: [
+      features: stripeProducts.find(p => p.name === 'Hot Prompt Year')?.features || [
         '1,500 AI-generated prompts per year',
         'Advanced prompt templates',
         'Priority generation',

@@ -11,6 +11,7 @@ import { ErrorMessage } from './components/ErrorMessage';
 import { UsageIndicator } from './components/UsageIndicator';
 import { PricingModal } from './components/PricingModal';
 import { PricingSection } from './components/PricingSection';
+import { SuccessPage } from './components/SuccessPage';
 
 export interface Prompt {
   id: string;
@@ -38,6 +39,17 @@ function App() {
   const [activeTab, setActiveTab] = useState<'generate' | 'saved' | 'pricing'>('generate');
   const [showAuthPage, setShowAuthPage] = useState(false);
   const [showPricingModal, setShowPricingModal] = useState(false);
+  const [showSuccessPage, setShowSuccessPage] = useState(false);
+
+  // Check for success parameter in URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('success') === 'true' || window.location.pathname === '/success') {
+      setShowSuccessPage(true);
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
 
   // Load saved prompts from localStorage on mount and when user changes
   useEffect(() => {
@@ -174,6 +186,16 @@ function App() {
   };
 
   const clearError = () => setError(null);
+
+  const handleBackToApp = () => {
+    setShowSuccessPage(false);
+    setActiveTab('generate');
+  };
+
+  // Show success page
+  if (showSuccessPage) {
+    return <SuccessPage onBackToApp={handleBackToApp} />;
+  }
 
   // Show loading spinner while checking authentication
   if (authLoading) {

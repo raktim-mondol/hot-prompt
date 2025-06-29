@@ -44,25 +44,25 @@ export const useSubscription = () => {
       setLoading(true);
       setError(null);
 
-      // Fetch subscription data
+      // Fetch subscription data using maybeSingle() instead of single()
       const { data: subscriptionData, error: subscriptionError } = await supabase
         .from('user_subscriptions')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (subscriptionError && subscriptionError.code !== 'PGRST116') {
+      if (subscriptionError) {
         throw subscriptionError;
       }
 
-      // Fetch usage data
+      // Fetch usage data using maybeSingle() instead of single()
       const { data: usageData, error: usageError } = await supabase
         .from('user_usage')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (usageError && usageError.code !== 'PGRST116') {
+      if (usageError) {
         throw usageError;
       }
 
