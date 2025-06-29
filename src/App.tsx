@@ -7,6 +7,7 @@ import { GeneratedPrompts } from './components/GeneratedPrompts';
 import { SavedPrompts } from './components/SavedPrompts';
 import { LoadingSpinner } from './components/LoadingSpinner';
 import { ErrorMessage } from './components/ErrorMessage';
+import { AuthModal } from './components/AuthModal';
 
 export interface Prompt {
   id: string;
@@ -24,6 +25,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'generate' | 'saved'>('generate');
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   // Load saved prompts from localStorage on mount and when user changes
   useEffect(() => {
@@ -45,6 +47,12 @@ function App() {
   const handleGenerate = async () => {
     if (!input.trim()) {
       setError('Please enter a prompt description');
+      return;
+    }
+
+    // Check if user is authenticated
+    if (!user) {
+      setShowAuthModal(true);
       return;
     }
 
@@ -85,6 +93,12 @@ function App() {
   };
 
   const handleSavePrompt = (prompt: Prompt) => {
+    // Check if user is authenticated
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+
     const updatedPrompt = { ...prompt, isFavorite: true, userId: user?.id };
     setSavedPrompts(prev => {
       const existing = prev.find(p => p.id === prompt.id);
@@ -95,6 +109,15 @@ function App() {
 
   const handleRemoveSaved = (promptId: string) => {
     setSavedPrompts(prev => prev.filter(p => p.id !== promptId));
+  };
+
+  const handleTabChange = (tab: 'generate' | 'saved') => {
+    // Check if user is authenticated for saved tab
+    if (tab === 'saved' && !user) {
+      setShowAuthModal(true);
+      return;
+    }
+    setActiveTab(tab);
   };
 
   const clearError = () => setError(null);
@@ -111,18 +134,18 @@ function App() {
     );
   }
 
-  // Show auth form if user is not logged in
-  if (!user) {
-    return <AuthForm />;
-  }
-
-  // Show main app if user is logged in
+  // Show main app (no longer checking for user authentication)
   return (
     <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50">
       <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg fill=%22%23F97316%22 fill-opacity=%220.03%22%3E%3Ccircle cx=%2230%22 cy=%2230%22 r=%222%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-50"></div>
       
       <div className="relative z-10">
-        <Header activeTab={activeTab} setActiveTab={setActiveTab} />
+        <Header 
+          activeTab={activeTab} 
+          setActiveTab={handleTabChange}
+          user={user}
+          onAuthClick={() => setShowAuthModal(true)}
+        />
         
         <main className="container mx-auto px-4 py-8 max-w-6xl">
           {error && (
@@ -156,6 +179,11 @@ function App() {
           )}
         </main>
       </div>
+
+      {/* Auth Modal */}
+      {showAuthModal && (
+        <AuthModal onClose={() => setShowAuthModal(false)} />
+      )}
     </div>
   );
 }
